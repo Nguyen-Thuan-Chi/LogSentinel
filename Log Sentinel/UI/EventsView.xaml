@@ -1,0 +1,7 @@
+﻿<UserControl x:Class="Log_Sentinel.UI.EventsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <DataGrid Name="EventsGrid" AutoGenerateColumns="True"/>
+    </Grid>
+</UserControl>
