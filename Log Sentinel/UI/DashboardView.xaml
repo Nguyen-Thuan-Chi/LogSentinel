@@ -1,9 +1,93 @@
 ﻿<UserControl x:Class="Log_Sentinel.UI.DashboardView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Background="#1e1e1e">
-        <TextBlock Text="Dashboard (Coming Soon)" 
-                   Foreground="White" FontSize="24" 
-                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    </Grid>
+    <Border Background="#F8FAFC" Margin="20">
+        <StackPanel>
+
+            <!-- Tiêu đề -->
+            <TextBlock Text="Dashboard" FontSize="26" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <!-- 3 ô thống kê -->
+            <UniformGrid Columns="3" Margin="0,0,0,20">
+                <Border Background="#2563EB" CornerRadius="10" Height="60" Margin="5">
+                    <TextBlock Text="Active Events: 24"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="18"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"/>
+                </Border>
+
+                <Border Background="#16A34A" CornerRadius="10" Height="60" Margin="5">
+                    <TextBlock Text="Rules Active: 8"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="18"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"/>
+                </Border>
+
+                <Border Background="#DC2626" CornerRadius="10" Height="60" Margin="5">
+                    <TextBlock Text="Alerts: 3"
+                               Foreground="White"
+                               FontWeight="Bold"
+                               FontSize="18"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"/>
+                </Border>
+            </UniformGrid>
+
+            <!-- Phần 2 bảng chia đôi -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Bảng 1: Recent Events -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Recent Events"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"/>
+                    <DataGrid AutoGenerateColumns="False"
+                              Height="250"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              BorderBrush="#CBD5E1"
+                              BorderThickness="1"
+                              AlternatingRowBackground="#F1F5F9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Event ID" Width="100"/>
+                            <DataGridTextColumn Header="Description" Width="2*"/>
+                            <DataGridTextColumn Header="Date" Width="*"/>
+                            <DataGridTextColumn Header="Status" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+
+                <!-- Bảng 2: Active Rules -->
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="Active Rules"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,8"/>
+                    <DataGrid AutoGenerateColumns="False"
+                              Height="250"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              BorderBrush="#CBD5E1"
+                              BorderThickness="1"
+                              AlternatingRowBackground="#F1F5F9">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Rule ID" Width="100"/>
+                            <DataGridTextColumn Header="Name" Width="2*"/>
+                            <DataGridTextColumn Header="Severity" Width="*"/>
+                            <DataGridTextColumn Header="Status" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Border>
 </UserControl>
