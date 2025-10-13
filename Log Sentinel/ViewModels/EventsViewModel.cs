@@ -1,74 +1,111 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
-namespace LogSentinelMini.ViewModels
+namespace Log_Sentinel.ViewModels
 {
-    // Một row trong DataGrid
-    public class EventRow
+    // Simple log entry model
+    public class LogEntry : INotifyPropertyChanged
     {
-        public long Id { get; set; }            
-        public string Time { get; set; }        
-        public string Host { get; set; }        
-        public string User { get; set; }        
-        public int EventId { get; set; }        
-        public string Provider { get; set; }    
-        public string Process { get; set; }     
-        public string Action { get; set; }      
+        private string _time = string.Empty;
+        private string _level = string.Empty;
+        private string _message = string.Empty;
+
+        public string Time
+        {
+            get => _time;
+            set { _time = value; OnPropertyChanged(nameof(Time)); }
+        }
+
+        public string Level
+        {
+            get => _level;
+            set { _level = value; OnPropertyChanged(nameof(Level)); }
+        }
+
+        public string Message
+        {
+            get => _message;
+            set { _message = value; OnPropertyChanged(nameof(Message)); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    // ViewModel của EventsView
-    public class EventsViewModel
+    // Optimized EventsViewModel
+    public class EventsViewModel : INotifyPropertyChanged
     {
-        // ObservableCollection: DataGrid tự động update khi thêm/xóa
-        public ObservableCollection<EventRow> Events { get; set; }
+        private ObservableCollection<LogEntry> _systemLogs = new();
+        private ObservableCollection<LogEntry> _eventReports = new();
+
+        public ObservableCollection<LogEntry> SystemLogs
+        {
+            get => _systemLogs;
+            set { _systemLogs = value; OnPropertyChanged(nameof(SystemLogs)); }
+        }
+
+        public ObservableCollection<LogEntry> EventReports
+        {
+            get => _eventReports;
+            set { _eventReports = value; OnPropertyChanged(nameof(EventReports)); }
+        }
 
         public EventsViewModel()
         {
-            Events = new ObservableCollection<EventRow>();
-            LoadFakeData();  // Load dữ liệu mẫu ban đầu
+            LoadSampleData();
         }
 
-        // Hàm load dữ liệu fake
-        private void LoadFakeData()
+        private void LoadSampleData()
         {
-            Events.Clear();
-
-            // Thêm một số event giả lập
-            Events.Add(new EventRow
+            // Load sample system logs
+            SystemLogs.Add(new LogEntry
             {
-                Id = 1,
-                Time = DateTime.UtcNow.AddMinutes(-10).ToString("s"),
-                Host = "host1",
-                User = "alice",
-                EventId = 4625,
-                Provider = "Security",
-                Process = "ssh.exe",
-                Action = "FailedLogon"
+                Time = DateTime.Now.AddMinutes(-10).ToString("HH:mm:ss"),
+                Level = "Info",
+                Message = "Application started successfully"
             });
 
-            Events.Add(new EventRow
+            SystemLogs.Add(new LogEntry
             {
-                Id = 2,
-                Time = DateTime.UtcNow.AddMinutes(-5).ToString("s"),
-                Host = "host2",
-                User = "bob",
-                EventId = 1,
-                Provider = "Sysmon",
-                Process = "powershell.exe",
-                Action = "ProcessCreate"
+                Time = DateTime.Now.AddMinutes(-5).ToString("HH:mm:ss"),
+                Level = "Warning",
+                Message = "Memory usage is high"
             });
 
-            Events.Add(new EventRow
+            SystemLogs.Add(new LogEntry
             {
-                Id = 3,
-                Time = DateTime.UtcNow.AddMinutes(-2).ToString("s"),
-                Host = "host3",
-                User = "charlie",
-                EventId = 4688,
-                Provider = "Security",
-                Process = "cmd.exe",
-                Action = "ProcessCreate"
+                Time = DateTime.Now.AddMinutes(-2).ToString("HH:mm:ss"),
+                Level = "Error",
+                Message = "Failed to connect to database"
+            });
+
+            // Load sample event reports
+            EventReports.Add(new LogEntry
+            {
+                Time = DateTime.Now.AddMinutes(-8).ToString("HH:mm:ss"),
+                Level = "Alert",
+                Message = "Suspicious login attempt detected"
+            });
+
+            EventReports.Add(new LogEntry
+            {
+                Time = DateTime.Now.AddMinutes(-3).ToString("HH:mm:ss"),
+                Level = "Info",
+                Message = "Security scan completed"
+            });
+
+            EventReports.Add(new LogEntry
+            {
+                Time = DateTime.Now.AddMinutes(-1).ToString("HH:mm:ss"),
+                Level = "Critical",
+                Message = "Unauthorized access blocked"
             });
         }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

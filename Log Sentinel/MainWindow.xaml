@@ -1,104 +1,319 @@
 ﻿<Window x:Class="Log_Sentinel.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Log_Sentinel"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="Log Sentinel"
-        Height="600"
-        Width="1000"
-        Background="#F1F5F9"
-        WindowStartupLocation="CenterScreen">
+        mc:Ignorable="d"
+        Title="Log Sentinel" 
+        Height="720" 
+        Width="1280"
+        Background="#F8FAFC"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="#1E293B"
+
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="14"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <Window.Resources>
+        <!-- Style cho các mục trong ListBox ở sidebar -->
+        <Style x:Key="SidebarListItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#475569"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Border"
+                                Background="Transparent"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="{TemplateBinding Margin}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <!-- Hiệu ứng khi di chuột qua -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F1F5F9"/>
+                            </Trigger>
+                            <!-- Hiệu ứng khi được chọn -->
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="Border" Property="Background" Value="#2563EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <!-- Sidebar -->
+            <ColumnDefinition Width="240"/>
+            <!-- Sidebar rộng hơn một chút -->
             <ColumnDefinition Width="*"/>
-            <!-- Nội dung -->
+            <!-- Nội dung chính -->
         </Grid.ColumnDefinitions>
 
-        <!-- SIDEBAR -->
-        <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0" Padding="10">
-            <StackPanel>
-                <!-- Logo -->
-                <StackPanel Orientation="Horizontal" Margin="0,20,0,40" HorizontalAlignment="Center">
-                    <Ellipse Width="35" Height="35" Fill="#2563EB"/>
-                    <TextBlock Text="Eedu.plan"
-                               VerticalAlignment="Center"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="#1E293B"
-                               Margin="8,0,0,0"/>
+        <!-- ======================= -->
+        <!--        SIDEBAR          -->
+        <!-- ======================= -->
+        <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Phần trên: Logo, Search, Menu chính -->
+                    <RowDefinition Height="*"/>
+                    <!-- Phần trống ở giữa -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Phần dưới: Settings, About -->
+                </Grid.RowDefinitions>
+
+                <!-- Phần trên của Sidebar -->
+                <StackPanel Grid.Row="0" Margin="15">
+                    <!-- Logo -->
+                    <StackPanel Orientation="Horizontal" Margin="5,15,0,25" HorizontalAlignment="Left">
+                        <materialDesign:PackIcon Kind="ShieldLock" Width="30" Height="30" Foreground="#2563EB" VerticalAlignment="Center"/>
+                        <TextBlock Text="Log Sentinel"
+                                   VerticalAlignment="Center"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   Foreground="#1E293B"
+                                   Margin="10,0,0,0"/>
+                    </StackPanel>
+
+                    <!-- Khu vực trống thay cho search cũ (đã chuyển bộ lọc vào Log Viewer) -->
+                    <Border Background="#F1F5F9" CornerRadius="8" Padding="8" Margin="0,0,0,15">
+                        <TextBlock Text="Quick actions"
+                                   Foreground="#64748B"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Menu Chính -->
+                    <ListBox x:Name="MainNavListBox"
+                             SelectionMode="Single"
+                             SelectedIndex="0"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             SelectionChanged="MainNavListBox_SelectionChanged">
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}" IsSelected="True">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ViewDashboardOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Dashboard" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <!-- Log Viewer mới (Xem log chi tiết) -->
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FileDocumentOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Log Viewer" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Gavel" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Rules" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="BellOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Alerts" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="ChartBar" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Analytics" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="SwapHorizontal" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Import / Export" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
                 </StackPanel>
 
-                <!-- Menu -->
-                <StackPanel>
-                    <Button Content="🏠  Dashboard" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="🧩  Rule" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="📊  Events" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="⚙️  Settings" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="❓  Help" Style="{StaticResource SidebarButtonStyle}"/>
-                    <Button Content="ℹ️  About Us" Style="{StaticResource SidebarButtonStyle}"/>
+                <!-- Phần dưới của Sidebar -->
+                <StackPanel Grid.Row="2" Margin="15">
+                    <Separator Margin="0,0,0,10"/>
+                    <ListBox SelectionMode="Single" BorderThickness="0" Background="Transparent">
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CogOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Settings" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="InformationOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="About Us" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="HelpCircleOutline" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock Text="Help" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
                 </StackPanel>
-            </StackPanel>
+
+            </Grid>
         </Border>
 
-        <!-- NỘI DUNG CHÍNH -->
-        <Grid Grid.Column="1" Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- ======================= -->
+        <!--      NỘI DUNG CHÍNH     -->
+        <!-- ======================= -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="30">
+                <!-- DASHBOARD VIEW -->
+                <Grid x:Name="DashboardPanel">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-            <!-- Tiêu đề -->
-            <TextBlock Text="Dashboard Overview"
-                       FontSize="24"
-                       FontWeight="Bold"
-                       Foreground="#1E293B"
-                       Margin="0,0,0,20"/>
+                    <!-- Tiêu đề -->
+                    <TextBlock Text="Dashboard Overview"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="#1E293B"
+                               Margin="0,10,0,25"/>
 
-            <!-- Hai bảng chia đôi -->
-            <Grid Grid.Row="1">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+                    <!-- Tuỳ chọn chế độ hiển thị -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Display Mode:" VerticalAlignment="Center"/>
+                            <ComboBox Width="180" SelectedIndex="0" Margin="12,0,0,0">
+                                <ComboBoxItem Content="User"/>
+                                <ComboBoxItem Content="Professional"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
 
-                <!-- Bảng 1 -->
-                <Border Grid.Column="0" Background="White" CornerRadius="10"
-                        Padding="15" BorderBrush="#E2E8F0" BorderThickness="1"
-                        Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="System Logs"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,10"/>
-                        <DataGrid AutoGenerateColumns="True"
-                                  Height="200"
-                                  Background="#F8FAFC"
-                                  BorderBrush="#CBD5E1"
-                                  BorderThickness="1"
-                                  IsReadOnly="True"/>
-                    </StackPanel>
-                </Border>
+                    <!-- System Logs full width -->
+                    <Border Grid.Row="2" Background="White" CornerRadius="12"
+                            Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="System Logs"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,15"/>
+                            <DataGrid x:Name="SystemLogsGrid"
+                                      Height="500"
+                                      Background="Transparent"
+                                      BorderBrush="#E2E8F0"
+                                      BorderThickness="1"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      RowHeight="35"
+                                      AutoGenerateColumns="False"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="150"/>
+                                    <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="100"/>
+                                    <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
-                <!-- Bảng 2 -->
-                <Border Grid.Column="1" Background="White" CornerRadius="10"
-                        Padding="15" BorderBrush="#E2E8F0" BorderThickness="1"
-                        Margin="10,0,0,0">
-                    <StackPanel>
-                        <TextBlock Text="Event Reports"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Margin="0,0,0,10"/>
-                        <DataGrid AutoGenerateColumns="True"
-                                  Height="200"
-                                  Background="#F8FAFC"
-                                  BorderBrush="#CBD5E1"
-                                  BorderThickness="1"
-                                  IsReadOnly="True"/>
-                    </StackPanel>
-                </Border>
+                <!-- LOG VIEWER VIEW -->
+                <Grid x:Name="LogViewerPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Log Viewer"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="#1E293B"
+                               Margin="0,10,0,25"/>
+
+                    <!-- Bộ lọc: thời gian, mức độ, module -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="From"/>
+                                <DatePicker Width="160"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="To"/>
+                                <DatePicker Width="160"/>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="Level"/>
+                                <ComboBox Width="160" SelectedIndex="0">
+                                    <ComboBoxItem Content="All"/>
+                                    <ComboBoxItem Content="Info"/>
+                                    <ComboBoxItem Content="Warning"/>
+                                    <ComboBoxItem Content="Error"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="Module"/>
+                                <ComboBox Width="200">
+                                    <ComboBoxItem Content="All"/>
+                                    <ComboBoxItem Content="Auth"/>
+                                    <ComboBoxItem Content="Network"/>
+                                    <ComboBoxItem Content="Storage"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <Button Content="Apply" Style="{StaticResource OptimizedButton}" Margin="12,18,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Event Reports đặt trong Log Viewer -->
+                    <Border Grid.Row="2" Background="White" CornerRadius="12"
+                            Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Event Reports"
+                                       FontSize="18"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,15"/>
+                            <DataGrid x:Name="EventReportsGrid"
+                                      Height="500"
+                                      Background="Transparent"
+                                      BorderBrush="#E2E8F0"
+                                      BorderThickness="1"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      RowHeight="35"
+                                      AutoGenerateColumns="False"
+                                      VirtualizingPanel.IsVirtualizing="True"
+                                      VirtualizingPanel.VirtualizationMode="Recycling">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="150"/>
+                                    <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="100"/>
+                                    <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
             </Grid>
-        </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

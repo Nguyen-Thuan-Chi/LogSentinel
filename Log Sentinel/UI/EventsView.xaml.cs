@@ -1,17 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows.Controls;
+using Log_Sentinel.ViewModels;
 
 namespace Log_Sentinel.UI
 {
@@ -20,9 +8,14 @@ namespace Log_Sentinel.UI
     /// </summary>
     public partial class EventsView : UserControl
     {
+        private readonly EventsViewModel _viewModel;
+
         public EventsView()
         {
             InitializeComponent();
+            
+            _viewModel = new EventsViewModel();
+            EventsDataGrid.ItemsSource = _viewModel.SystemLogs;
         }
     }
 }
