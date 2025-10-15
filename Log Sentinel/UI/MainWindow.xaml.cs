@@ -15,6 +15,7 @@ namespace Log_Sentinel
             InitializeComponent();
             
             _eventsViewModel = new EventsViewModel();
+            DataContext = _eventsViewModel;
             
             // Bind data to DataGrids
             SystemLogsGrid.ItemsSource = _eventsViewModel.SystemLogs;

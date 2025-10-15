@@ -1,9 +1,24 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 
 namespace Log_Sentinel.ViewModels
 {
+    public class SettingsViewModel : INotifyPropertyChanged
+    {
+        private string _displayMode = "User"; // User | Professional
+        public string DisplayMode
+        {
+            get => _displayMode;
+            set { _displayMode = value; OnPropertyChanged(nameof(DisplayMode)); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     // Simple log entry model
     public class LogEntry : INotifyPropertyChanged
     {
@@ -39,6 +54,9 @@ namespace Log_Sentinel.ViewModels
     {
         private ObservableCollection<LogEntry> _systemLogs = new();
         private ObservableCollection<LogEntry> _eventReports = new();
+        private int _totalToday;
+        private int _warningCount;
+        private int _errorCount;
 
         public ObservableCollection<LogEntry> SystemLogs
         {
@@ -52,9 +70,29 @@ namespace Log_Sentinel.ViewModels
             set { _eventReports = value; OnPropertyChanged(nameof(EventReports)); }
         }
 
+        public int TotalToday
+        {
+            get => _totalToday;
+            private set { _totalToday = value; OnPropertyChanged(nameof(TotalToday)); }
+        }
+
+        public int WarningCount
+        {
+            get => _warningCount;
+            private set { _warningCount = value; OnPropertyChanged(nameof(WarningCount)); }
+        }
+
+        public int ErrorCount
+        {
+            get => _errorCount;
+            private set { _errorCount = value; OnPropertyChanged(nameof(ErrorCount)); }
+        }
+
         public EventsViewModel()
         {
             LoadSampleData();
+            HookCollectionChanged();
+            RecalculateCounters();
         }
 
         private void LoadSampleData()
@@ -102,6 +140,21 @@ namespace Log_Sentinel.ViewModels
                 Level = "Critical",
                 Message = "Unauthorized access blocked"
             });
+        }
+
+        private void HookCollectionChanged()
+        {
+            SystemLogs.CollectionChanged += (_, __) => RecalculateCounters();
+        }
+
+        private void RecalculateCounters()
+        {
+            var today = DateTime.Now.Date;
+
+            // Time is string in this simplified model => treat all entries as today for now
+            TotalToday = SystemLogs.Count; // Fake: all sample logs are from today
+            WarningCount = SystemLogs.Count(l => string.Equals(l.Level, "Warning", StringComparison.OrdinalIgnoreCase));
+            ErrorCount = SystemLogs.Count(l => string.Equals(l.Level, "Error", StringComparison.OrdinalIgnoreCase));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

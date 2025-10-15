@@ -90,11 +90,23 @@
                                    Margin="10,0,0,0"/>
                     </StackPanel>
 
-                    <!-- Khu vực trống thay cho search cũ (đã chuyển bộ lọc vào Log Viewer) -->
-                    <Border Background="#F1F5F9" CornerRadius="8" Padding="8" Margin="0,0,0,15">
-                        <TextBlock Text="Quick actions"
-                                   Foreground="#64748B"
-                                   VerticalAlignment="Center"/>
+                    <!-- Quick actions + Global Display Mode -->
+                    <Border Background="#F1F5F9" CornerRadius="8" Padding="12" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="Quick actions"
+                                       Foreground="#64748B"
+                                       Margin="0,0,0,8"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Display Mode:" VerticalAlignment="Center"/>
+                                <ComboBox Width="180"
+                                          Margin="12,0,0,0"
+                                          SelectedValue="{Binding Source={StaticResource GlobalSettings}, Path=DisplayMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectedValuePath="Content">
+                                    <ComboBoxItem Content="User" />
+                                    <ComboBoxItem Content="Professional" />
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
                     </Border>
 
                     <!-- Menu Chính -->
@@ -147,7 +159,7 @@
                 <!-- Phần dưới của Sidebar -->
                 <StackPanel Grid.Row="2" Margin="15">
                     <Separator Margin="0,0,0,10"/>
-                    <ListBox SelectionMode="Single" BorderThickness="0" Background="Transparent">
+                    <ListBox x:Name="SecondaryNavListBox" SelectedIndex="-1" SelectionMode="Single" BorderThickness="0" Background="Transparent">
                         <ListBoxItem Style="{StaticResource SidebarListItemStyle}">
                             <StackPanel Orientation="Horizontal">
                                 <materialDesign:PackIcon Kind="CogOutline" Width="22" Height="22" VerticalAlignment="Center"/>
@@ -179,6 +191,20 @@
             <Grid Margin="30">
                 <!-- DASHBOARD VIEW -->
                 <Grid x:Name="DashboardPanel">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="0"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -192,16 +218,35 @@
                                Foreground="#1E293B"
                                Margin="0,10,0,25"/>
 
-                    <!-- Tuỳ chọn chế độ hiển thị -->
-                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Display Mode:" VerticalAlignment="Center"/>
-                            <ComboBox Width="180" SelectedIndex="0" Margin="12,0,0,0">
-                                <ComboBoxItem Content="User"/>
-                                <ComboBoxItem Content="Professional"/>
-                            </ComboBox>
-                        </StackPanel>
-                    </Border>
+                    <!-- Summary cards: Today, Warning, Error -->
+                    <Grid Grid.Row="1" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Total Today -->
+                        <Border Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,16,0">
+                            <StackPanel>
+                                <TextBlock Text="Logs Today" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding TotalToday}" FontSize="26" FontWeight="Bold" Foreground="#1E293B"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Warnings -->
+                        <Border Grid.Column="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,16,0">
+                            <StackPanel>
+                                <TextBlock Text="Warnings" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding WarningCount}" FontSize="26" FontWeight="Bold" Foreground="#F59E0B"/>
+                            </StackPanel>
+                        </Border>
+                        <!-- Errors -->
+                        <Border Grid.Column="2" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="Errors" Foreground="#64748B"/>
+                                <TextBlock Text="{Binding ErrorCount}" FontSize="26" FontWeight="Bold" Foreground="#DC2626"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
 
                     <!-- System Logs full width -->
                     <Border Grid.Row="2" Background="White" CornerRadius="12"
@@ -237,6 +282,20 @@
 
                 <!-- LOG VIEWER VIEW -->
                 <Grid x:Name="LogViewerPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="1"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -278,6 +337,10 @@
                                     <ComboBoxItem Content="Storage"/>
                                 </ComboBox>
                             </StackPanel>
+                            <StackPanel Margin="0,0,12,0" VerticalAlignment="Bottom">
+                                <TextBlock Text="Search"/>
+                                <TextBox Width="220" materialDesign:HintAssist.Hint="Message contains..."/>
+                            </StackPanel>
                             <Button Content="Apply" Style="{StaticResource OptimizedButton}" Margin="12,18,0,0"/>
                         </StackPanel>
                     </Border>
@@ -310,6 +373,238 @@
                                     <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- RULES VIEW -->
+                <Grid x:Name="RulesPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="2"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Rules" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,25"/>
+
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="12" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Add Rule" Style="{StaticResource OptimizedButton}"/>
+                            <Separator Width="16" Background="Transparent"/>
+                            <TextBlock Text="Filter:" VerticalAlignment="Center"/>
+                            <TextBox Width="240" Margin="8,0,0,0" materialDesign:HintAssist.Hint="Search rules"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <DataGrid Height="520"
+                                  Background="Transparent"
+                                  BorderBrush="#E2E8F0" BorderThickness="1"
+                                  IsReadOnly="True" CanUserAddRows="False" AutoGenerateColumns="False"
+                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0"
+                                  RowHeight="40" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Rule Name" Binding="{Binding Name}" Width="200"/>
+                                <DataGridTextColumn Header="Condition" Binding="{Binding Condition}" Width="*"/>
+                                <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="120"/>
+                                <DataGridTemplateColumn Header="Enabled" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <ToggleButton IsChecked="{Binding IsEnabled}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+
+                <!-- ALERTS VIEW -->
+                <Grid x:Name="AlertsPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="3"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Alerts" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,25"/>
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <DataGrid Height="560"
+                                  Background="Transparent"
+                                  BorderBrush="#E2E8F0" BorderThickness="1"
+                                  IsReadOnly="True" CanUserAddRows="False" AutoGenerateColumns="False"
+                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#E2E8F0"
+                                  RowHeight="40" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time" Binding="{Binding Time}" Width="160"/>
+                                <DataGridTemplateColumn Header="Severity" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon Kind="AlertCircleOutline" Width="20" Height="20" Margin="0,0,6,0"/>
+                                                <TextBlock Text="{Binding Severity}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Rule" Binding="{Binding RuleName}" Width="220"/>
+                                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+
+                <!-- ANALYTICS VIEW -->
+                <Grid x:Name="AnalyticsPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="4"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Analytics" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,25"/>
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                        <TextBlock Text="Charts placeholder (LiveCharts2 / OxyPlot - later)"/>
+                    </Border>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Grid.Column="0" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,16,16">
+                            <TextBlock Text="Logs by Level (chart)"/>
+                        </Border>
+                        <Border Grid.Row="0" Grid.Column="1" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                            <TextBlock Text="Logs by Source (chart)"/>
+                        </Border>
+                        <Border Grid.Row="1" Grid.ColumnSpan="2" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                            <TextBlock Text="Trend over time (chart)"/>
+                        </Border>
+                    </Grid>
+                </Grid>
+
+                <!-- IMPORT / EXPORT VIEW -->
+                <Grid x:Name="ImportExportPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=MainNavListBox}" Value="5"/>
+                                        <Condition Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="-1"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Import / Export" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,25"/>
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="24" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Button Content="Import Rules (JSON)" Style="{StaticResource OptimizedButton}" Margin="0,0,12,0"/>
+                            <Button Content="Export Logs (CSV)" Style="{StaticResource OptimizedButton}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- SETTINGS / ABOUT / HELP VIEW -->
+                <Grid x:Name="SettingsPanel" Visibility="Collapsed">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="1">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SecondaryNavListBox}" Value="2">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Settings / About / Help" FontSize="28" FontWeight="Bold" Foreground="#1E293B" Margin="0,10,0,25"/>
+                    <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="16" BorderBrush="#E2E8F0" BorderThickness="1" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="General" Style="{StaticResource OptimizedButton}" Margin="0,0,12,0"/>
+                            <Button Content="Theme" Style="{StaticResource OptimizedButton}" Margin="0,0,12,0"/>
+                            <Button Content="Shortcuts" Style="{StaticResource OptimizedButton}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Application settings and information." FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Theme:" Margin="0,0,8,0"/>
+                                <ComboBox Width="180">
+                                    <ComboBoxItem Content="Light"/>
+                                    <ComboBoxItem Content="Dark"/>
+                                    <ComboBoxItem Content="System"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <Separator Margin="0,8"/>
+                            <TextBlock Text="About" FontWeight="SemiBold"/>
+                            <TextBlock Text="Log Sentinel – A lightweight log viewer."/>
+                            <Separator Margin="0,8"/>
+                            <TextBlock Text="Help" FontWeight="SemiBold"/>
+                            <TextBlock>
+                                <Run Text="Visit documentation or report issues on our repository."/>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
                 </Grid>
