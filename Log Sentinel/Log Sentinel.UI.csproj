@@ -22,9 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="Logic\" />
-    <Folder Include="Models\" />
+    <ProjectReference Include="..\LogSentinel.BUS\LogSentinel.BUS.csproj" />
   </ItemGroup>
 
 </Project>

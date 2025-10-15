@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Log Sentinel", "Log Sentinel\Log Sentinel.csproj", "{F0418A08-E098-4840-9C7D-CE7EC7AFC9C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Log Sentinel.UI", "Log Sentinel\Log Sentinel.UI.csproj", "{F0418A08-E098-4840-9C7D-CE7EC7AFC9C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogSentinel.BUS", "LogSentinel.BUS\LogSentinel.BUS.csproj", "{6793B08C-3D9B-4C04-A444-322DFB594030}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogSentinel.DAL", "LogSentinel.DAL\LogSentinel.DAL.csproj", "{E5A3319F-E92B-40E4-B0CC-88708AAB8B3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{F0418A08-E098-4840-9C7D-CE7EC7AFC9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F0418A08-E098-4840-9C7D-CE7EC7AFC9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F0418A08-E098-4840-9C7D-CE7EC7AFC9C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6793B08C-3D9B-4C04-A444-322DFB594030}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6793B08C-3D9B-4C04-A444-322DFB594030}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6793B08C-3D9B-4C04-A444-322DFB594030}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6793B08C-3D9B-4C04-A444-322DFB594030}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E5A3319F-E92B-40E4-B0CC-88708AAB8B3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E5A3319F-E92B-40E4-B0CC-88708AAB8B3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E5A3319F-E92B-40E4-B0CC-88708AAB8B3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E5A3319F-E92B-40E4-B0CC-88708AAB8B3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
