@@ -37,17 +37,35 @@ namespace LogSentinel.DAL.Repositories
 
         public async Task<IEnumerable<EventEntity>> SearchAsync(string searchTerm, int skip = 0, int take = 100)
         {
-            var term = searchTerm.ToLower();
-            return await _dbSet
-                .Where(e => e.User.ToLower().Contains(term)
-                    || e.Host.ToLower().Contains(term)
-                    || e.Process.ToLower().Contains(term)
-                    || e.Action.ToLower().Contains(term)
-                    || e.DetailsJson.ToLower().Contains(term))
-                .OrderByDescending(e => e.EventTime)
-                .Skip(skip)
-                .Take(take)
-                .ToListAsync();
+            // Try FTS5 search first (SQLite only)
+            try
+            {
+                var sql = @"
+                    SELECT e.* FROM Events e
+                    INNER JOIN EventsFTS fts ON e.Id = fts.Id
+                    WHERE EventsFTS MATCH {0}
+                    ORDER BY e.EventTime DESC
+                    LIMIT {1} OFFSET {2}";
+                
+                return await _context.Events
+                    .FromSqlRaw(sql, searchTerm, take, skip)
+                    .ToListAsync();
+            }
+            catch
+            {
+                // Fallback to LIKE search (for SQL Server or if FTS not available)
+                var term = searchTerm.ToLower();
+                return await _dbSet
+                    .Where(e => e.User.ToLower().Contains(term)
+                        || e.Host.ToLower().Contains(term)
+                        || e.Process.ToLower().Contains(term)
+                        || e.Action.ToLower().Contains(term)
+                        || e.DetailsJson.ToLower().Contains(term))
+                    .OrderByDescending(e => e.EventTime)
+                    .Skip(skip)
+                    .Take(take)
+                    .ToListAsync();
+            }
         }
 
         public async Task<IEnumerable<EventEntity>> GetByFilterAsync(

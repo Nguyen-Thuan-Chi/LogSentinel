@@ -8,18 +8,30 @@ namespace Log_Sentinel
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly MainViewModel _mainViewModel;
         private readonly EventsViewModel _eventsViewModel;
+        private readonly SettingsViewModel _settingsViewModel;
 
-        public MainWindow()
+        // Expose Settings as a bindable property for XAML
+        public SettingsViewModel GlobalSettings
+        {
+            get => _settingsViewModel;
+        }
+
+        public MainWindow(MainViewModel mainViewModel, EventsViewModel eventsViewModel, SettingsViewModel settingsViewModel)
         {
             InitializeComponent();
             
-            _eventsViewModel = new EventsViewModel();
-            DataContext = _eventsViewModel;
+            _mainViewModel = mainViewModel;
+            _eventsViewModel = eventsViewModel;
+            _settingsViewModel = settingsViewModel;
+            DataContext = _mainViewModel;
             
             // Bind data to DataGrids
             SystemLogsGrid.ItemsSource = _eventsViewModel.SystemLogs;
             EventReportsGrid.ItemsSource = _eventsViewModel.EventReports;
+            
+            // No need to add to Resources; use GlobalSettings property for bindings
         }
 
         private void MainNavListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -48,3 +60,4 @@ namespace Log_Sentinel
         }
     }
 }
+

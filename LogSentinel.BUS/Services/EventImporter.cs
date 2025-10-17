@@ -9,14 +9,14 @@ using LogSentinel.DAL.Data;
 using LogSentinel.DAL.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogSentinel.BUS.Services
 {
     public class EventImporter : IEventImporter
     {
         private readonly IEventNormalizer _normalizer;
-        private readonly IEventRepository _eventRepository;
-        private readonly IRuleEngine _ruleEngine;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<EventImporter> _logger;
         private readonly IConfiguration _configuration;
         private readonly Channel<EventDto> _eventChannel;
@@ -24,14 +24,12 @@ namespace LogSentinel.BUS.Services
 
         public EventImporter(
             IEventNormalizer normalizer,
-            IEventRepository eventRepository,
-            IRuleEngine ruleEngine,
+            IServiceProvider serviceProvider,
             ILogger<EventImporter> logger,
             IConfiguration configuration)
         {
             _normalizer = normalizer;
-            _eventRepository = eventRepository;
-            _ruleEngine = ruleEngine;
+            _serviceProvider = serviceProvider;
             _logger = logger;
             _configuration = configuration;
 
@@ -148,6 +146,11 @@ namespace LogSentinel.BUS.Services
             {
                 try
                 {
+                    // Use scoped services for DB operations
+                    using var scope = _serviceProvider.CreateScope();
+                    var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+                    var ruleEngine = scope.ServiceProvider.GetRequiredService<IRuleEngine>();
+
                     // Convert DTO to Entity
                     var entity = new EventEntity
                     {
@@ -167,10 +170,10 @@ namespace LogSentinel.BUS.Services
                     };
 
                     // Persist to database
-                    entity = await _eventRepository.AddAsync(entity);
+                    entity = await eventRepository.AddAsync(entity);
 
                     // Evaluate rules
-                    await _ruleEngine.EvaluateEventAsync(entity);
+                    await ruleEngine.EvaluateEventAsync(entity);
                 }
                 catch (Exception ex)
                 {

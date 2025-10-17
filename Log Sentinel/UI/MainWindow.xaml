@@ -13,7 +13,7 @@
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="#1E293B"
 
-        TextElement.FontWeight="Regular"
+        TextElement.FontWeight="Normal"
         TextElement.FontSize="14"
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
@@ -52,6 +52,15 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Local fallback for OptimizedButton to prevent StaticResource load issues -->
+        <Style x:Key="OptimizedButton" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontWeight" Value="Medium"/>
         </Style>
     </Window.Resources>
 
@@ -100,7 +109,7 @@
                                 <TextBlock Text="Display Mode:" VerticalAlignment="Center"/>
                                 <ComboBox Width="180"
                                           Margin="12,0,0,0"
-                                          SelectedValue="{Binding Source={StaticResource GlobalSettings}, Path=DisplayMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          SelectedValue="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=GlobalSettings.DisplayMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           SelectedValuePath="Content">
                                     <ComboBoxItem Content="User" />
                                     <ComboBoxItem Content="Professional" />
