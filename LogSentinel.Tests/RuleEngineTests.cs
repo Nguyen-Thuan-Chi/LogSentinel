@@ -69,7 +69,7 @@ namespace LogSentinel.Tests
                 User = "alice",
                 Level = "Warning",
                 Host = "HOST1",
-                Message = "Failed login"
+                Action = "Logon"
             }).ToList();
 
             _mockEventRepository.Setup(x => x.GetByDateRangeAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
@@ -122,7 +122,7 @@ namespace LogSentinel.Tests
                 User = "admin",
                 Host = "DC-01",
                 DetailsJson = "{\"group\": \"Administrators\", \"action\": \"member_added\"}",
-                Message = "Member added to Administrators group"
+                Action = "MemberAdded"
             };
 
             // Act
@@ -171,7 +171,7 @@ namespace LogSentinel.Tests
                 Host = "WORKSTATION-01",
                 Process = "powershell.exe",
                 DetailsJson = "{\"command_line\": \"powershell.exe -NoP -W Hidden -Enc aGVsbG8=\"}",
-                Message = "PowerShell execution detected"
+                Action = "ProcessCreate"
             };
 
             // Act
