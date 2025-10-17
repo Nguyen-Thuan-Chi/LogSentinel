@@ -7,6 +7,7 @@ namespace LogSentinel.BUS.Interfaces
 {
     public interface IAlertService
     {
+        event System.EventHandler<AlertDto>? AlertCreated;
         Task<AlertEntity> CreateAlertAsync(RuleEntity rule, IEnumerable<EventEntity> matchingEvents, string title, string description);
         Task<IEnumerable<AlertDto>> GetRecentAlertsAsync(int minutes = 5);
         Task AcknowledgeAlertAsync(long alertId, string acknowledgedBy);

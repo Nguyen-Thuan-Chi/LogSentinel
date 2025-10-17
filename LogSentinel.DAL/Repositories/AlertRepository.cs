@@ -15,6 +15,7 @@ namespace LogSentinel.DAL.Repositories
         Task<IEnumerable<AlertEntity>> GetUnacknowledgedAsync();
         Task<AlertEntity> AddAsync(AlertEntity entity);
         Task UpdateAsync(AlertEntity entity);
+        Task DeleteAsync(AlertEntity entity);
         Task<int> CountRecentAsync(int minutes = 5);
     }
 

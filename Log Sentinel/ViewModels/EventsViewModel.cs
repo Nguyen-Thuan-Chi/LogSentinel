@@ -10,20 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Log_Sentinel.ViewModels
 {
-    public class SettingsViewModel : INotifyPropertyChanged
-    {
-        private string _displayMode = "User"; // User | Professional
-        public string DisplayMode
-        {
-            get => _displayMode;
-            set { _displayMode = value; OnPropertyChanged(nameof(DisplayMode)); }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged(string propertyName) =>
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
     // Simple log entry model for UI display
     public class LogEntry : INotifyPropertyChanged
     {
@@ -164,15 +150,20 @@ namespace Log_Sentinel.ViewModels
                         SystemLogs.Clear();
                         foreach (var evt in events.Take(100))
                         {
+                            var detailsPreview = string.IsNullOrEmpty(evt.DetailsJson) 
+                                ? "" 
+                                : evt.DetailsJson.Substring(0, Math.Min(50, evt.DetailsJson.Length));
+                            var action = evt.Action ?? "";
+                            
                             SystemLogs.Add(new LogEntry
                             {
                                 Id = evt.Id,
                                 Time = evt.EventTime.ToString("HH:mm:ss"),
-                                Level = evt.Level,
-                                Message = evt.Action + " - " + evt.DetailsJson.Substring(0, Math.Min(50, evt.DetailsJson.Length)),
-                                Host = evt.Host,
-                                User = evt.User,
-                                Process = evt.Process
+                                Level = evt.Level ?? "Info",
+                                Message = action + (string.IsNullOrEmpty(detailsPreview) ? "" : " - " + detailsPreview),
+                                Host = evt.Host ?? "",
+                                User = evt.User ?? "",
+                                Process = evt.Process ?? ""
                             });
                         }
 

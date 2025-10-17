@@ -1,0 +1,138 @@
+<UserControl x:Class="Log_Sentinel.UI.HelpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Border Background="#F8FAFC" Margin="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Text="Help &amp; Documentation" FontSize="26" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <!-- Help Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <Border Background="White" CornerRadius="12" Padding="30" BorderBrush="#CBD5E1" BorderThickness="1">
+                    <StackPanel>
+                        <!-- Quick Start Guide -->
+                        <TextBlock Text="Quick Start Guide" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,15"/>
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,20" LineHeight="22">
+                            Welcome to Log Sentinel! This application helps you monitor and analyze Windows Event Logs 
+                            and Sysmon events with rule-based detection and alerting.
+                        </TextBlock>
+
+                        <!-- Dashboard -->
+                        <StackPanel Margin="0,0,0,20">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="ViewDashboard" Width="24" Height="24" VerticalAlignment="Center" Foreground="#2563EB"/>
+                                <TextBlock Text="Dashboard" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock TextWrapping="Wrap" Margin="34,0,0,0" LineHeight="22">
+                                View real-time statistics, recent events, active rules, and latest alerts. 
+                                The dashboard provides a comprehensive overview of your system's security status.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Log Viewer -->
+                        <StackPanel Margin="0,0,0,20">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="FileDocument" Width="24" Height="24" VerticalAlignment="Center" Foreground="#2563EB"/>
+                                <TextBlock Text="Log Viewer" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock TextWrapping="Wrap" Margin="34,0,0,0" LineHeight="22">
+                                Browse and search through imported event logs. Filter by date range, severity level, 
+                                module, or search for specific text in event messages.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Rules -->
+                        <StackPanel Margin="0,0,0,20">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="Gavel" Width="24" Height="24" VerticalAlignment="Center" Foreground="#2563EB"/>
+                                <TextBlock Text="Rules Management" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock TextWrapping="Wrap" Margin="34,0,0,0" LineHeight="22">
+                                Create, edit, enable/disable, or delete detection rules. Rules are based on Sigma format 
+                                and help identify suspicious activities in your logs. Each rule can have different severity 
+                                levels (Critical, High, Medium, Low).
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- Alerts -->
+                        <StackPanel Margin="0,0,0,20">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <materialDesign:PackIcon Kind="Bell" Width="24" Height="24" VerticalAlignment="Center" Foreground="#2563EB"/>
+                                <TextBlock Text="Alerts" FontSize="18" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock TextWrapping="Wrap" Margin="34,0,0,0" LineHeight="22">
+                                View all triggered alerts from your detection rules. Filter by severity, acknowledge alerts, 
+                                view details, or export to CSV for further analysis. Unacknowledged alerts require attention.
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Separator Margin="0,20"/>
+
+                        <!-- Keyboard Shortcuts -->
+                        <TextBlock Text="Keyboard Shortcuts" FontSize="20" FontWeight="SemiBold" Margin="0,20,0,15"/>
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Ctrl + R" FontFamily="Consolas" Margin="0,0,0,10"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="Refresh current view" Margin="0,0,0,10"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl + F" FontFamily="Consolas" Margin="0,0,0,10"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="Focus search box" Margin="0,0,0,10"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl + N" FontFamily="Consolas" Margin="0,0,0,10"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="Create new rule" Margin="0,0,0,10"/>
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Ctrl + E" FontFamily="Consolas"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="Export data"/>
+                        </Grid>
+
+                        <Separator Margin="0,20"/>
+
+                        <!-- Support -->
+                        <TextBlock Text="Support &amp; Resources" FontSize="20" FontWeight="SemiBold" Margin="0,20,0,15"/>
+                        <StackPanel>
+                            <Button Content="?? View Documentation" 
+                                    Background="#3B82F6" 
+                                    Foreground="White" 
+                                    BorderThickness="0" 
+                                    Padding="15,8"
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Left"
+                                    Cursor="Hand"/>
+                            <Button Content="?? Report an Issue" 
+                                    Background="#EF4444" 
+                                    Foreground="White" 
+                                    BorderThickness="0" 
+                                    Padding="15,8"
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Left"
+                                    Cursor="Hand"/>
+                            <Button Content="?? Community Forum" 
+                                    Background="#10B981" 
+                                    Foreground="White" 
+                                    BorderThickness="0" 
+                                    Padding="15,8"
+                                    HorizontalAlignment="Left"
+                                    Cursor="Hand"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</UserControl>

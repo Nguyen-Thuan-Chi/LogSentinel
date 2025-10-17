@@ -1,35 +1,198 @@
 ﻿<UserControl x:Class="Log_Sentinel.UI.RuleView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Log_Sentinel.UI">
+    <UserControl.Resources>
+        <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <local:SeverityToColorConverter x:Key="SeverityToColorConverter"/>
+    </UserControl.Resources>
+    
     <Border Background="#F8FAFC" Margin="20">
-        <StackPanel>
-            <TextBlock Text="Rules" FontSize="22" FontWeight="Bold" Margin="0,0,0,15"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBox Width="250" Height="30" VerticalContentAlignment="Center" Margin="0"/>
-                <Button Content="Add Rule" 
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="Rule Management" FontSize="26" FontWeight="Bold" HorizontalAlignment="Left"/>
+                <Button Content="🔄 Refresh" 
+                        Command="{Binding RefreshCommand}"
+                        Background="#6B7280" 
+                        Foreground="White" 
+                        BorderThickness="0" 
+                        Padding="12,8"
+                        Cursor="Hand"
+                        HorizontalAlignment="Right"/>
+            </Grid>
+
+            <!-- Search and Add -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="300" 
+                         Height="35" 
+                         VerticalContentAlignment="Center"
+                         Padding="10"
+                         BorderBrush="#CBD5E1"
+                         BorderThickness="1">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <VisualBrush Stretch="None" AlignmentX="Left">
+                                                <VisualBrush.Visual>
+                                                    <TextBlock Text="🔍 Search rules..." 
+                                                               Foreground="#94A3B8" 
+                                                               Margin="10,0,0,0"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                
+                <Button Content="➕ Add Rule" 
+                        Command="{Binding AddRuleCommand}"
                         Background="#2563EB" 
                         Foreground="White" 
                         BorderThickness="0" 
-                        Padding="10,5"
-                        Margin="5,0,0,0"
+                        Padding="15,8"
+                        Height="35"
+                        Margin="10,0,0,0"
                         Cursor="Hand"/>
             </StackPanel>
 
-            <ListView>
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Border BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Margin="0,5">
-                            <StackPanel Orientation="Horizontal" Margin="10,0,0,0">
-                                <TextBlock Text="{Binding Name}" Width="200" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Condition}" Width="300" VerticalAlignment="Center"/>
-                                <Button Content="Edit" Width="60" Margin="5,0"/>
-                                <Button Content="Delete" Width="60" Margin="5,0"/>
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </StackPanel>
+            <!-- Rules DataGrid -->
+            <DataGrid Grid.Row="2"
+                      ItemsSource="{Binding FilteredRules}"
+                      SelectedItem="{Binding SelectedRule}"
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="Column"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      BorderBrush="#CBD5E1"
+                      BorderThickness="1"
+                      AlternatingRowBackground="#F1F5F9"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#E2E8F0">
+                <DataGrid.Columns>
+                    <!-- Status Indicator -->
+                    <DataGridTemplateColumn Header="●" Width="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="12" Height="12" 
+                                        Fill="{Binding IsEnabled, Converter={StaticResource BoolToColorConverter}}"
+                                        HorizontalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Name -->
+                    <DataGridTextColumn Header="Rule Name" 
+                                       Binding="{Binding Name}" 
+                                       Width="2*"
+                                       FontWeight="SemiBold"/>
+
+                    <!-- Description -->
+                    <DataGridTextColumn Header="Description" 
+                                       Binding="{Binding Description}" 
+                                       Width="3*"/>
+
+                    <!-- Severity -->
+                    <DataGridTemplateColumn Header="Severity" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding Severity, Converter={StaticResource SeverityToColorConverter}}"
+                                       CornerRadius="4"
+                                       Padding="6,2"
+                                       HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding Severity}" 
+                                              Foreground="White"
+                                              FontWeight="SemiBold"
+                                              FontSize="11"
+                                              HorizontalAlignment="Center"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Trigger Count -->
+                    <DataGridTextColumn Header="Triggers" 
+                                       Binding="{Binding TriggerCount}" 
+                                       Width="80"
+                                       FontWeight="Bold"/>
+
+                    <!-- Last Triggered -->
+                    <DataGridTextColumn Header="Last Triggered" 
+                                       Binding="{Binding LastTriggered}" 
+                                       Width="140"/>
+
+                    <!-- Status -->
+                    <DataGridTextColumn Header="Status" 
+                                       Binding="{Binding StatusText}" 
+                                       Width="80"/>
+
+                    <!-- Actions -->
+                    <DataGridTemplateColumn Header="Actions" Width="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <!-- Toggle Button -->
+                                    <Button Command="{Binding DataContext.ToggleRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                           CommandParameter="{Binding}"
+                                           Background="#10B981" 
+                                           Foreground="White" 
+                                           BorderThickness="0" 
+                                           Padding="8,4"
+                                           Margin="2"
+                                           Cursor="Hand">
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Content" Value="✓"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                                        <Setter Property="Content" Value="✗"/>
+                                                        <Setter Property="Background" Value="#6B7280"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <!-- Edit Button -->
+                                    <Button Content="✎" 
+                                           Command="{Binding DataContext.EditRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                           CommandParameter="{Binding}"
+                                           Background="#3B82F6" 
+                                           Foreground="White" 
+                                           BorderThickness="0" 
+                                           Padding="8,4"
+                                           Margin="2"
+                                           Cursor="Hand"/>
+
+                                    <!-- Delete Button -->
+                                    <Button Content="🗑" 
+                                           Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                           CommandParameter="{Binding}"
+                                           Background="#EF4444" 
+                                           Foreground="White" 
+                                           BorderThickness="0" 
+                                           Padding="8,4"
+                                           Margin="2"
+                                           Cursor="Hand"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </Border>
 </UserControl>

@@ -1,0 +1,13 @@
+name: Security Log Cleared
+description: Detects when the Windows Security event log is cleared (Event ID 1102)
+severity: Critical
+enabled: true
+selection:
+  event_id: 1102
+  level: Information
+condition:
+  always: true
+action:
+  alert: true
+  title: "Security Event Log Cleared"
+  description: "The Security event log was cleared on {host} by {user}"

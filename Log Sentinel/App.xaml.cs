@@ -26,6 +26,8 @@ namespace Log_Sentinel
         private IHost? _host;
         private CancellationTokenSource? _cancellationTokenSource;
 
+        public IServiceProvider ServiceProvider => _host?.Services ?? throw new InvalidOperationException("Service provider not initialized");
+
         public App()
         {
             // Ensure log directory exists and configure Serilog
@@ -131,14 +133,17 @@ namespace Log_Sentinel
 
                         // Register ViewModels
                         services.AddSingleton<MainViewModel>();
-                        services.AddSingleton<EventsViewModel>(provider => new EventsViewModel(provider));
+                        services.AddTransient<DashboardViewModel>();
+                        services.AddTransient<RuleViewModel>();
+                        services.AddTransient<AlertsViewModel>();
+                        services.AddTransient<EventsViewModel>(provider => new EventsViewModel(provider));
                         services.AddSingleton<SettingsViewModel>();
 
                         // Register MainWindow
                         services.AddSingleton(provider => new MainWindow(
                             provider.GetRequiredService<MainViewModel>(),
-                            provider.GetRequiredService<EventsViewModel>(),
-                            provider.GetRequiredService<SettingsViewModel>()));
+                            provider.GetRequiredService<SettingsViewModel>(),
+                            provider.GetRequiredService<IAlertService>()));
                     })
                     .Build();
 

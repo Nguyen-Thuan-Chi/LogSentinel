@@ -1,0 +1,13 @@
+name: Suspicious PowerShell Execution
+description: Detects PowerShell execution with obfuscation or hidden window flags
+severity: High
+enabled: true
+selection:
+  process: powershell
+condition:
+  pattern: '(-Enc|-NoP|-W Hidden|-WindowStyle Hidden|-ExecutionPolicy Bypass)'
+  field: details_json
+action:
+  alert: true
+  title: "Suspicious PowerShell Execution Detected"
+  description: "PowerShell was executed with suspicious flags on {host} by {user}: {process}"

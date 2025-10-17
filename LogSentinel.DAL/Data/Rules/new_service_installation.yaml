@@ -1,0 +1,13 @@
+name: New Service Installation
+description: Detects installation of new Windows services (Event ID 7045)
+severity: Medium
+enabled: true
+selection:
+  event_id: 7045
+  provider: Service Control Manager
+condition:
+  always: true
+action:
+  alert: true
+  title: "New Service Installed"
+  description: "A new Windows service was installed on {host}: {process}"

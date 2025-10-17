@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Log_Sentinel.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Log_Sentinel.UI
 {
@@ -23,6 +25,13 @@ namespace Log_Sentinel.UI
         public RuleView()
         {
             InitializeComponent();
+            
+            // Create a new scope and get the ViewModel
+            if (Application.Current is App app)
+            {
+                var scope = app.ServiceProvider.CreateScope();
+                DataContext = scope.ServiceProvider.GetRequiredService<RuleViewModel>();
+            }
         }
     }
 }
