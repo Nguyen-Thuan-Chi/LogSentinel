@@ -1,0 +1,14 @@
+name: Account Lockout
+description: Detects account lockouts which may indicate brute force attacks
+severity: Medium
+enabled: true
+selection:
+  event_id: 4740
+condition:
+  count: 3
+  timeframe: 3600  # 1 hour
+  group_by: user
+action:
+  alert: true
+  title: "Multiple Account Lockouts"
+  description: "Account {user} has been locked out {count} times in the last hour"

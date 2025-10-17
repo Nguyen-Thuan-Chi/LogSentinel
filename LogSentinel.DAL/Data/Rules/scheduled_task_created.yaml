@@ -1,0 +1,12 @@
+name: Scheduled Task Created
+description: Detects creation of scheduled tasks (persistence mechanism)
+severity: Medium
+enabled: true
+selection:
+  event_id: 4698
+condition:
+  always: true
+action:
+  alert: true
+  title: "Scheduled Task Created"
+  description: "A scheduled task was created on {host} by {user}"

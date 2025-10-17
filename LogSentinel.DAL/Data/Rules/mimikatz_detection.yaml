@@ -1,0 +1,13 @@
+name: Mimikatz Detection
+description: Detects potential Mimikatz credential dumping activity
+severity: Critical
+enabled: true
+selection:
+  process: ".*"
+condition:
+  pattern: "(?i)(mimikatz|sekurlsa|lsadump|kerberos::golden)"
+  field: details_json
+action:
+  alert: true
+  title: "Mimikatz Activity Detected"
+  description: "Potential credential dumping tool detected on {host}"

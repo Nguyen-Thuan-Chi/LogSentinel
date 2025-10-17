@@ -1,0 +1,15 @@
+name: Brute Force RDP Attack
+description: Detects multiple failed RDP login attempts
+severity: High
+enabled: true
+selection:
+  event_id: 4625
+  provider: "Microsoft-Windows-Security-Auditing"
+condition:
+  count: 10
+  timeframe: 600  # 10 minutes
+  group_by: host
+action:
+  alert: true
+  title: "Potential RDP Brute Force Attack"
+  description: "{count} failed RDP login attempts on {host} in the last 10 minutes"

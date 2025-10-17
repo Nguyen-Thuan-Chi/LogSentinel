@@ -1,0 +1,15 @@
+name: Failed Login Threshold
+description: Detects multiple failed login attempts (Event ID 4625) from the same user
+severity: High
+enabled: true
+selection:
+  event_id: 4625
+  level: Warning
+condition:
+  count: 5
+  timeframe: 300  # 5 minutes in seconds
+  group_by: user
+action:
+  alert: true
+  title: "Multiple Failed Login Attempts Detected"
+  description: "User {user} had {count} failed login attempts in the last 5 minutes"

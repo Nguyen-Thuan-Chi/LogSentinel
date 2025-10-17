@@ -1,0 +1,13 @@
+name: Suspicious PowerShell Execution
+description: Detects PowerShell with suspicious command-line flags like -Enc, -NoP, or -W Hidden
+severity: High
+enabled: true
+selection:
+  process: "powershell.exe"
+condition:
+  pattern: "(?i)(-enc|-nop|-w hidden|-windowstyle hidden|-executionpolicy bypass)"
+  field: details_json
+action:
+  alert: true
+  title: "Suspicious PowerShell Command Detected"
+  description: "PowerShell executed with suspicious flags on {host} by {user}"

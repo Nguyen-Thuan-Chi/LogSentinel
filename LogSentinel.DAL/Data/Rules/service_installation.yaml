@@ -1,0 +1,12 @@
+name: Service Installation
+description: Detects new service installation
+severity: Medium
+enabled: true
+selection:
+  event_id: 7045
+condition:
+  always: true
+action:
+  alert: true
+  title: "New Service Installed"
+  description: "A new service was installed on {host}"

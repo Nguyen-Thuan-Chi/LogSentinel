@@ -1,0 +1,14 @@
+name: Privilege Escalation Attempt
+description: Detects privilege escalation attempts
+severity: Critical
+enabled: true
+selection:
+  event_id: 4672
+  level: Info
+condition:
+  pattern: "(?i)(SeDebugPrivilege|SeTcbPrivilege|SeBackupPrivilege)"
+  field: details_json
+action:
+  alert: true
+  title: "Privilege Escalation Detected"
+  description: "Sensitive privilege assigned to {user} on {host}"

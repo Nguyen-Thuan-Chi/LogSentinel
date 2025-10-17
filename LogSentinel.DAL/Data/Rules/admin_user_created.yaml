@@ -1,0 +1,14 @@
+name: Admin User Created
+description: Detects when a user is added to the Administrators group
+severity: Critical
+enabled: true
+selection:
+  event_id: 4732
+  level: Info
+condition:
+  pattern: "(?i)(administrators|admin)"
+  field: details_json
+action:
+  alert: true
+  title: "Administrator Account Created"
+  description: "A user was added to the Administrators group on {host}"
