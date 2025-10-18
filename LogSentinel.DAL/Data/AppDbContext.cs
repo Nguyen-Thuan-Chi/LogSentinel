@@ -16,18 +16,18 @@ namespace LogSentinel.DAL.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure EventEntity
+            // Configure EventEntity for SQLite
             modelBuilder.Entity<EventEntity>(entity =>
             {
-                entity.Property(e => e.EventTime).HasColumnType("datetime");
-                entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+                entity.Property(e => e.EventTime).HasColumnType("TEXT");
+                entity.Property(e => e.CreatedAt).HasColumnType("TEXT");
             });
 
-            // Configure AlertEntity
+            // Configure AlertEntity for SQLite
             modelBuilder.Entity<AlertEntity>(entity =>
             {
-                entity.Property(e => e.Timestamp).HasColumnType("datetime");
-                entity.Property(e => e.AcknowledgedAt).HasColumnType("datetime");
+                entity.Property(e => e.Timestamp).HasColumnType("TEXT");
+                entity.Property(e => e.AcknowledgedAt).HasColumnType("TEXT");
                 
                 entity.HasOne(a => a.Rule)
                     .WithMany(r => r.Alerts)
@@ -35,12 +35,12 @@ namespace LogSentinel.DAL.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Configure RuleEntity
+            // Configure RuleEntity for SQLite
             modelBuilder.Entity<RuleEntity>(entity =>
             {
-                entity.Property(e => e.CreatedAt).HasColumnType("datetime");
-                entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-                entity.Property(e => e.LastTriggeredAt).HasColumnType("datetime");
+                entity.Property(e => e.CreatedAt).HasColumnType("TEXT");
+                entity.Property(e => e.UpdatedAt).HasColumnType("TEXT");
+                entity.Property(e => e.LastTriggeredAt).HasColumnType("TEXT");
             });
 
             // SQLite FTS5 virtual table for full-text search

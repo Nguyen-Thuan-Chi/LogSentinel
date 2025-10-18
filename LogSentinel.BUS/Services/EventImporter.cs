@@ -21,17 +21,20 @@ namespace LogSentinel.BUS.Services
         private readonly IConfiguration _configuration;
         private readonly Channel<EventDto> _eventChannel;
         private readonly int _channelCapacity;
+        private readonly IWindowsEventSource? _windowsEventSource;
 
         public EventImporter(
             IEventNormalizer normalizer,
             IServiceProvider serviceProvider,
             ILogger<EventImporter> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IWindowsEventSource? windowsEventSource = null)
         {
             _normalizer = normalizer;
             _serviceProvider = serviceProvider;
             _logger = logger;
             _configuration = configuration;
+            _windowsEventSource = windowsEventSource;
 
             _channelCapacity = configuration.GetValue<int>("LogSentinel:ChannelCapacity", 10000);
             _eventChannel = Channel.CreateBounded<EventDto>(new BoundedChannelOptions(_channelCapacity)
@@ -43,22 +46,66 @@ namespace LogSentinel.BUS.Services
         public async Task StartStreamingAsync(CancellationToken cancellationToken)
         {
             var sampleLogsPath = _configuration.GetValue<string>("LogSentinel:SampleLogsPath", "./sample-logs/incoming");
-            var enableWatcher = _configuration.GetValue<bool>("LogSentinel:EnableFileWatcher", true);
+            var enableFileWatcher = _configuration.GetValue<bool>("LogSentinel:EnableFileWatcher", true);
+            var enableSampleFiles = _configuration.GetValue<bool>("LogSentinel:Sources:SampleFiles", true);
 
-            if (!enableWatcher)
+            // Start background processor first (shared by all sources)
+            _ = Task.Run(() => ProcessEventsAsync(cancellationToken), cancellationToken);
+
+            var tasks = new List<Task>();
+
+            // Start Windows Event Log source if configured
+            if (_windowsEventSource != null)
             {
-                _logger.LogInformation("File watcher disabled");
+                var enableEventLog = _configuration.GetValue<bool>("LogSentinel:Sources:EventLog", false);
+                var enableSysmon = _configuration.GetValue<bool>("LogSentinel:Sources:Sysmon", false);
+
+                if (enableEventLog || enableSysmon)
+                {
+                    _logger.LogInformation("Starting Windows Event Log and Sysmon streaming");
+                    
+                    // Check permissions
+                    if (!_windowsEventSource.HasSufficientPermissions())
+                    {
+                        _logger.LogWarning(
+                            "Insufficient privileges to read Security channel. Some events may be unavailable. " +
+                            "Run as Administrator or grant specific ETW rights for full functionality.");
+                    }
+                    
+                    tasks.Add(_windowsEventSource.StartStreamingAsync(_eventChannel.Writer, cancellationToken));
+                }
+            }
+
+            // Start file watcher for sample logs if configured
+            if (enableFileWatcher && enableSampleFiles)
+            {
+                _logger.LogInformation("File watcher enabled for sample logs");
+                
+                // Ensure directory exists
+                Directory.CreateDirectory(sampleLogsPath);
+                
+                tasks.Add(WatchDirectoryAsync(sampleLogsPath, cancellationToken));
+            }
+            else
+            {
+                _logger.LogInformation("Sample file watcher disabled");
+            }
+
+            if (tasks.Count == 0)
+            {
+                _logger.LogWarning("No event sources are enabled. Enable at least one source in configuration.");
                 return;
             }
 
-            // Ensure directory exists
-            Directory.CreateDirectory(sampleLogsPath);
-
-            // Start background processor
-            _ = Task.Run(() => ProcessEventsAsync(cancellationToken), cancellationToken);
-
-            // Start file watcher
-            await WatchDirectoryAsync(sampleLogsPath, cancellationToken);
+            // Wait for all streaming tasks
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("Event streaming stopped");
+            }
         }
 
         public async Task ImportBatchAsync(string directoryPath)
@@ -166,6 +213,7 @@ namespace LogSentinel.BUS.Services
                         Object = eventDto.Object,
                         DetailsJson = eventDto.DetailsJson,
                         RawXml = eventDto.RawXml,
+                        Source = eventDto.Source,
                         CreatedAt = DateTime.UtcNow
                     };
 

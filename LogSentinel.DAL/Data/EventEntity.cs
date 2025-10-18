@@ -11,6 +11,7 @@ namespace LogSentinel.DAL.Data
     [Index(nameof(User))]
     [Index(nameof(Process))]
     [Index(nameof(Host))]
+    [Index(nameof(Source))]
     public class EventEntity
     {
         [Key]
@@ -48,6 +49,9 @@ namespace LogSentinel.DAL.Data
         public string DetailsJson { get; set; } = "{}";
 
         public string? RawXml { get; set; }
+        
+        [MaxLength(50)]
+        public string Source { get; set; } = "Sample"; // Sample, WindowsEventLog, Sysmon
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

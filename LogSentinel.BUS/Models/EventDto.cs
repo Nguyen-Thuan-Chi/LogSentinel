@@ -17,5 +17,6 @@ namespace LogSentinel.BUS.Models
         public string Message { get; set; } = "";
         public string DetailsJson { get; set; } = "{}";
         public string? RawXml { get; set; }
+        public string Source { get; set; } = "Sample"; // Sample, WindowsEventLog, Sysmon
     }
 }

@@ -8,5 +8,6 @@ namespace LogSentinel.BUS.Interfaces
     {
         EventDto Normalize(string rawLogLine);
         EventDto NormalizeFromWindowsEvent(System.Diagnostics.Eventing.Reader.EventRecord eventRecord);
+        EventDto NormalizeFromSysmonEvent(System.Diagnostics.Eventing.Reader.EventRecord eventRecord);
     }
 }

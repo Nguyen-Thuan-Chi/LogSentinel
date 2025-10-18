@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System.Timers;
 using Log_Sentinel.Helpers;
 using LogSentinel.BUS.Interfaces;
 using LogSentinel.BUS.Models;
@@ -13,16 +14,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Log_Sentinel.ViewModels
 {
-    public class DashboardViewModel : INotifyPropertyChanged
+    public class DashboardViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IEventRepository _eventRepository;
         private readonly IAlertRepository _alertRepository;
         private readonly IRuleRepository _ruleRepository;
         private readonly IAlertService _alertService;
+        private readonly System.Timers.Timer _refreshTimer;
 
         private int _activeEventsCount;
         private int _activeRulesCount;
         private int _alertsCount;
+        private bool _disposed = false;
 
         public int ActiveEventsCount
         {
@@ -58,6 +61,11 @@ namespace Log_Sentinel.ViewModels
             _alertRepository = alertRepository;
             _ruleRepository = ruleRepository;
             _alertService = alertService;
+
+            // Setup auto-refresh timer (every 10 seconds for dashboard)
+            _refreshTimer = new System.Timers.Timer(10000);
+            _refreshTimer.Elapsed += async (sender, e) => await LoadDataAsync();
+            _refreshTimer.Start();
 
             RefreshCommand = new RelayCommand(async _ => await LoadDataAsync());
 
@@ -143,6 +151,27 @@ namespace Log_Sentinel.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _refreshTimer?.Stop();
+                    _refreshTimer?.Dispose();
+                    if (_alertService != null)
+                        _alertService.AlertCreated -= OnAlertCreated;
+                }
+                _disposed = true;
             }
         }
 

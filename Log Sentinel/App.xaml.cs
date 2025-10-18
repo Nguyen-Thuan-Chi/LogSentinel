@@ -64,7 +64,7 @@ namespace Log_Sentinel
                         // Register Configuration
                         services.AddSingleton<IConfiguration>(configuration);
 
-                        // Resolve connection string or fallback to local SQLite
+                        // Use SQLite database only
                         var connectionString = configuration.GetConnectionString("DefaultConnection");
                         if (string.IsNullOrWhiteSpace(connectionString))
                         {
@@ -78,46 +78,34 @@ namespace Log_Sentinel
                             Log.Warning("Connection string 'DefaultConnection' not found. Falling back to SQLite at {DbPath}", dbPath);
                         }
 
-                        // Decide provider
-                        var useSqlServer =
-                            connectionString.Contains("Server=", StringComparison.OrdinalIgnoreCase) ||
-                            connectionString.Contains("Initial Catalog=", StringComparison.OrdinalIgnoreCase);
-
-                        if (useSqlServer)
+                        // Ensure SQLite directory exists if path is file based
+                        string? sqliteFilePath = null;
+                        foreach (var part in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                         {
-                            services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-                            Log.Information("Using SQL Server database");
+                            if (part.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqliteFilePath = part.Substring("Data Source=".Length).Trim();
+                                break;
+                            }
+                            if (part.StartsWith("Filename=", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sqliteFilePath = part.Substring("Filename=".Length).Trim();
+                                break;
+                            }
                         }
-                        else
+
+                        if (!string.IsNullOrWhiteSpace(sqliteFilePath))
                         {
-                            // Ensure SQLite directory exists if path is file based
-                            string? sqliteFilePath = null;
-                            foreach (var part in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                            var sqliteDir = Path.GetDirectoryName(sqliteFilePath);
+                            if (!string.IsNullOrWhiteSpace(sqliteDir))
                             {
-                                if (part.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    sqliteFilePath = part.Substring("Data Source=".Length).Trim();
-                                    break;
-                                }
-                                if (part.StartsWith("Filename=", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    sqliteFilePath = part.Substring("Filename=".Length).Trim();
-                                    break;
-                                }
+                                Directory.CreateDirectory(sqliteDir);
                             }
-
-                            if (!string.IsNullOrWhiteSpace(sqliteFilePath))
-                            {
-                                var sqliteDir = Path.GetDirectoryName(sqliteFilePath);
-                                if (!string.IsNullOrWhiteSpace(sqliteDir))
-                                {
-                                    Directory.CreateDirectory(sqliteDir);
-                                }
-                            }
-
-                            services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-                            Log.Information("Using SQLite database");
                         }
+
+                        // Configure SQLite database context
+                        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+                        Log.Information("Using SQLite database at: {ConnectionString}", connectionString);
 
                         // Register Repositories
                         services.AddScoped<IEventRepository, EventRepository>();
@@ -126,6 +114,7 @@ namespace Log_Sentinel
 
                         // Register Services
                         services.AddSingleton<IEventNormalizer, EventNormalizer>();
+                        services.AddSingleton<IWindowsEventSource, WindowsEventSource>();
                         services.AddScoped<IRuleProvider, RuleProvider>();
                         services.AddScoped<IRuleEngine, RuleEngine>();
                         services.AddScoped<IAlertService, AlertService>();
@@ -149,10 +138,76 @@ namespace Log_Sentinel
 
                 await _host.StartAsync();
 
-                // Seed database
+                // Run database initialization and seed data
                 using (var scope = _host.Services.CreateScope())
                 {
                     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                    try
+                    {
+                        // Check if we need to apply migrations
+                        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+                        
+                        if (pendingMigrations.Any())
+                        {
+                            Log.Information("Found {Count} pending migrations. Applying...", pendingMigrations.Count());
+                            await dbContext.Database.MigrateAsync();
+                            Log.Information("Database migrations applied successfully");
+                        }
+                        else
+                        {
+                            // Ensure database exists
+                            var canConnect = await dbContext.Database.CanConnectAsync();
+                            if (!canConnect)
+                            {
+                                await dbContext.Database.MigrateAsync();
+                                Log.Information("Database created with migrations");
+                            }
+                            else
+                            {
+                                Log.Information("Database connection verified");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Error during database migration");
+                        
+                        // Ask user if they want to recreate database
+                        var result = MessageBox.Show(
+                            $"Database migration failed:\n{ex.Message}\n\nDo you want to recreate the database? (All existing data will be lost)",
+                            "Database Migration Error",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning);
+                        
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            try
+                            {
+                                Log.Warning("Recreating database as requested by user");
+                                await dbContext.Database.EnsureDeletedAsync();
+                                await dbContext.Database.MigrateAsync();
+                                Log.Information("Database recreated successfully");
+                            }
+                            catch (Exception recreateEx)
+                            {
+                                Log.Fatal(recreateEx, "Failed to recreate database");
+                                MessageBox.Show(
+                                    $"Failed to recreate database:\n{recreateEx.Message}",
+                                    "Error",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                                Shutdown(1);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            Shutdown(1);
+                            return;
+                        }
+                    }
+
                     await SeedData.SeedDatabaseAsync(dbContext);
                     Log.Information("Database seeded successfully");
                 }

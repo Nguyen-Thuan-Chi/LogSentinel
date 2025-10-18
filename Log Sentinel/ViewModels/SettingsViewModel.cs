@@ -15,6 +15,9 @@ namespace Log_Sentinel.ViewModels
         private bool _enableNotifications = true;
         private bool _enableSoundAlerts = false;
         private string _displayMode = "Professional"; // User | Professional
+        private bool _enableSampleFiles = true;
+        private bool _enableEventLog = false;
+        private bool _enableSysmon = false;
 
         public string DatabasePath
         {
@@ -73,6 +76,36 @@ namespace Log_Sentinel.ViewModels
             set
             {
                 _displayMode = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool EnableSampleFiles
+        {
+            get => _enableSampleFiles;
+            set
+            {
+                _enableSampleFiles = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool EnableEventLog
+        {
+            get => _enableEventLog;
+            set
+            {
+                _enableEventLog = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool EnableSysmon
+        {
+            get => _enableSysmon;
+            set
+            {
+                _enableSysmon = value;
                 OnPropertyChanged();
             }
         }

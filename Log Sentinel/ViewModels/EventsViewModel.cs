@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Timers;
 using LogSentinel.DAL.Data;
 using LogSentinel.DAL.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,7 @@ namespace Log_Sentinel.ViewModels
         private string _host = string.Empty;
         private string _user = string.Empty;
         private string _process = string.Empty;
+        private string _source = string.Empty;
 
         public long Id
         {
@@ -63,21 +65,30 @@ namespace Log_Sentinel.ViewModels
             set { _process = value; OnPropertyChanged(nameof(Process)); }
         }
 
+        public string Source
+        {
+            get => _source;
+            set { _source = value; OnPropertyChanged(nameof(Source)); }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         protected void OnPropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     // Optimized EventsViewModel with real data integration
-    public class EventsViewModel : INotifyPropertyChanged
+    public class EventsViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly IServiceProvider? _serviceProvider;
+        private readonly System.Timers.Timer _refreshTimer;
         private ObservableCollection<LogEntry> _systemLogs = new();
         private ObservableCollection<LogEntry> _eventReports = new();
         private int _totalToday;
         private int _warningCount;
         private int _errorCount;
         private int _criticalCount;
+        private string _sourceFilter = "All"; // All, Sample, WindowsEventLog, Sysmon
+        private bool _disposed = false;
 
         public ObservableCollection<LogEntry> SystemLogs
         {
@@ -115,16 +126,29 @@ namespace Log_Sentinel.ViewModels
             private set { _criticalCount = value; OnPropertyChanged(nameof(CriticalCount)); }
         }
 
+        public string SourceFilter
+        {
+            get => _sourceFilter;
+            set
+            {
+                _sourceFilter = value;
+                OnPropertyChanged(nameof(SourceFilter));
+                _ = LoadDataAsync();
+            }
+        }
+
         public EventsViewModel()
         {
             // Default constructor for design-time
-            LoadSampleData();
+            _refreshTimer = new System.Timers.Timer(5000); // Refresh every 5 seconds
+            _refreshTimer.Elapsed += async (sender, e) => await RefreshDataAsync();
             HookCollectionChanged();
         }
 
         public EventsViewModel(IServiceProvider serviceProvider) : this()
         {
             _serviceProvider = serviceProvider;
+            _refreshTimer.Start(); // Start auto-refresh for real data
             _ = LoadDataAsync();
         }
 
@@ -143,7 +167,12 @@ namespace Log_Sentinel.ViewModels
                     // Load today's events
                     var today = DateTime.Today;
                     var tomorrow = today.AddDays(1);
-                    var events = await eventRepository.GetByDateRangeAsync(today, tomorrow);
+                    var allEvents = await eventRepository.GetByDateRangeAsync(today, tomorrow);
+                    
+                    // Apply source filter
+                    var events = SourceFilter == "All" 
+                        ? allEvents 
+                        : allEvents.Where(e => e.Source == SourceFilter);
 
                     await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
@@ -163,7 +192,8 @@ namespace Log_Sentinel.ViewModels
                                 Message = action + (string.IsNullOrEmpty(detailsPreview) ? "" : " - " + detailsPreview),
                                 Host = evt.Host ?? "",
                                 User = evt.User ?? "",
-                                Process = evt.Process ?? ""
+                                Process = evt.Process ?? "",
+                                Source = evt.Source ?? "Sample"
                             });
                         }
 
@@ -200,64 +230,25 @@ namespace Log_Sentinel.ViewModels
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
-                // Fall back to sample data
-                LoadSampleData();
+                
+                // Show message that no real data is available yet
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    SystemLogs.Clear();
+                    SystemLogs.Add(new LogEntry
+                    {
+                        Time = DateTime.Now.ToString("HH:mm:ss"),
+                        Level = "Info", 
+                        Message = "Waiting for real-time events from Windows Event Log and Sysmon...",
+                        Host = "LogSentinel",
+                        User = "System",
+                        Process = "LogSentinel.exe",
+                        Source = "System"
+                    });
+                });
+                
+                RecalculateCounters();
             }
-        }
-
-        private void LoadSampleData()
-        {
-            // Load sample system logs (fallback)
-            SystemLogs.Add(new LogEntry
-            {
-                Time = DateTime.Now.AddMinutes(-10).ToString("HH:mm:ss"),
-                Level = "Info",
-                Message = "Application started successfully",
-                Host = "localhost",
-                User = "system",
-                Process = "logsentinel.exe"
-            });
-
-            SystemLogs.Add(new LogEntry
-            {
-                Time = DateTime.Now.AddMinutes(-5).ToString("HH:mm:ss"),
-                Level = "Warning",
-                Message = "Memory usage is high",
-                Host = "localhost",
-                User = "system",
-                Process = "logsentinel.exe"
-            });
-
-            SystemLogs.Add(new LogEntry
-            {
-                Time = DateTime.Now.AddMinutes(-2).ToString("HH:mm:ss"),
-                Level = "Error",
-                Message = "Failed to connect to database",
-                Host = "localhost",
-                User = "system",
-                Process = "logsentinel.exe"
-            });
-
-            // Load sample event reports
-            EventReports.Add(new LogEntry
-            {
-                Time = DateTime.Now.AddMinutes(-8).ToString("HH:mm:ss"),
-                Level = "High",
-                Message = "Suspicious login attempt detected",
-                Host = "Failed Login Threshold",
-                User = "New"
-            });
-
-            EventReports.Add(new LogEntry
-            {
-                Time = DateTime.Now.AddMinutes(-3).ToString("HH:mm:ss"),
-                Level = "Medium",
-                Message = "Security scan completed",
-                Host = "System Monitor",
-                User = "Acknowledged"
-            });
-
-            RecalculateCounters();
         }
 
         private void HookCollectionChanged()
@@ -276,6 +267,25 @@ namespace Log_Sentinel.ViewModels
         public async Task RefreshDataAsync()
         {
             await LoadDataAsync();
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _refreshTimer?.Stop();
+                    _refreshTimer?.Dispose();
+                }
+                _disposed = true;
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

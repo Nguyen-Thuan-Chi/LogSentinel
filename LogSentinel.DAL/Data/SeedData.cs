@@ -35,20 +35,17 @@ namespace LogSentinel.DAL.Data
 
         public static async Task SeedDatabaseAsync(AppDbContext context)
         {
-            // Run migrations
-            await context.Database.MigrateAsync();
-
-            // Seed Rules
+            // Only seed Rules - Real events will come from Windows Event Log and Sysmon
             if (!await context.Rules.AnyAsync())
             {
                 await SeedRulesAsync(context);
             }
 
-            // Seed Events
-            if (!await context.Events.AnyAsync())
-            {
-                await SeedEventsAsync(context, 500);
-            }
+            // Do not seed fake events - use real-time data instead
+            // Real events will be imported from:
+            // 1. Windows Event Log (Security, System, Application)
+            // 2. Sysmon events
+            // 3. Sample log files (if enabled)
         }
 
         private static async Task SeedRulesAsync(AppDbContext context)
@@ -106,6 +103,38 @@ selection:
   process: ""powershell.exe""
 condition:
   pattern: ""(?i)(-enc|-nop|-w hidden)"""
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Process Creation Monitoring",
+                        Description = "Monitors new process creation from Sysmon Event ID 1",
+                        Severity = "Medium",
+                        IsEnabled = true,
+                        YamlContent = @"name: Process Creation Monitoring
+description: Monitors new process creation from Sysmon Event ID 1
+severity: Medium
+enabled: true
+selection:
+  event_id: 1
+  source: Sysmon
+condition:
+  pattern: ""(?i)(cmd|powershell|wscript|cscript)"""
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Network Connection Monitoring", 
+                        Description = "Monitors network connections from Sysmon Event ID 3",
+                        Severity = "Low",
+                        IsEnabled = true,
+                        YamlContent = @"name: Network Connection Monitoring
+description: Monitors network connections from Sysmon Event ID 3
+severity: Low
+enabled: true
+selection:
+  event_id: 3
+  source: Sysmon
+condition:
+  pattern: ""(?i)(443|80|22|21|23)"""
                     }
                 };
 
