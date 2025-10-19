@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Log_Sentinel.ViewModels
 {
     // Simple log entry model for UI display
-    public class LogEntry : INotifyPropertyChanged
+    public class LogEntryUI : INotifyPropertyChanged
     {
         private long _id;
         private string _time = string.Empty;
@@ -81,22 +81,30 @@ namespace Log_Sentinel.ViewModels
     {
         private readonly IServiceProvider? _serviceProvider;
         private readonly System.Timers.Timer _refreshTimer;
-        private ObservableCollection<LogEntry> _systemLogs = new();
-        private ObservableCollection<LogEntry> _eventReports = new();
+        private ObservableCollection<LogEntryUI> _systemLogs = new();
+        private ObservableCollection<LogEntryUI> _filteredSystemLogs = new();
+        private ObservableCollection<LogEntryUI> _eventReports = new();
         private int _totalToday;
         private int _warningCount;
         private int _errorCount;
         private int _criticalCount;
         private string _sourceFilter = "All"; // All, Sample, WindowsEventLog, Sysmon
+        private string _searchText = string.Empty;
         private bool _disposed = false;
 
-        public ObservableCollection<LogEntry> SystemLogs
+        public ObservableCollection<LogEntryUI> SystemLogs
         {
             get => _systemLogs;
             set { _systemLogs = value; OnPropertyChanged(nameof(SystemLogs)); }
         }
 
-        public ObservableCollection<LogEntry> EventReports
+        public ObservableCollection<LogEntryUI> FilteredSystemLogs
+        {
+            get => _filteredSystemLogs;
+            set { _filteredSystemLogs = value; OnPropertyChanged(nameof(FilteredSystemLogs)); }
+        }
+
+        public ObservableCollection<LogEntryUI> EventReports
         {
             get => _eventReports;
             set { _eventReports = value; OnPropertyChanged(nameof(EventReports)); }
@@ -133,7 +141,18 @@ namespace Log_Sentinel.ViewModels
             {
                 _sourceFilter = value;
                 OnPropertyChanged(nameof(SourceFilter));
-                _ = LoadDataAsync();
+                ApplyFilters();
+            }
+        }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged(nameof(SearchText));
+                ApplyFilters();
             }
         }
 
@@ -167,14 +186,9 @@ namespace Log_Sentinel.ViewModels
                     // Load today's events
                     var today = DateTime.Today;
                     var tomorrow = today.AddDays(1);
-                    var allEvents = await eventRepository.GetByDateRangeAsync(today, tomorrow);
-                    
-                    // Apply source filter
-                    var events = SourceFilter == "All" 
-                        ? allEvents 
-                        : allEvents.Where(e => e.Source == SourceFilter);
+                    var events = await eventRepository.GetByDateRangeAsync(today, tomorrow);
 
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
                         SystemLogs.Clear();
                         foreach (var evt in events.Take(100))
@@ -184,7 +198,7 @@ namespace Log_Sentinel.ViewModels
                                 : evt.DetailsJson.Substring(0, Math.Min(50, evt.DetailsJson.Length));
                             var action = evt.Action ?? "";
                             
-                            SystemLogs.Add(new LogEntry
+                            SystemLogs.Add(new LogEntryUI
                             {
                                 Id = evt.Id,
                                 Time = evt.EventTime.ToString("HH:mm:ss"),
@@ -197,8 +211,11 @@ namespace Log_Sentinel.ViewModels
                             });
                         }
 
-                        // Update counts
-                        TotalToday = events.Count();
+                        // Apply filters after loading data
+                        ApplyFilters();
+                        
+                        // Total count is from all events, not filtered
+                        // Individual counts will be calculated in RecalculateCounters
                     });
                 }
 
@@ -207,12 +224,12 @@ namespace Log_Sentinel.ViewModels
                     // Load recent alerts
                     var alerts = await alertRepository.GetRecentAsync(60); // Last hour
 
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
                         EventReports.Clear();
                         foreach (var alert in alerts.Take(50))
                         {
-                            EventReports.Add(new LogEntry
+                            EventReports.Add(new LogEntryUI
                             {
                                 Id = alert.Id,
                                 Time = alert.Timestamp.ToString("HH:mm:ss"),
@@ -232,10 +249,10 @@ namespace Log_Sentinel.ViewModels
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
                 
                 // Show message that no real data is available yet
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     SystemLogs.Clear();
-                    SystemLogs.Add(new LogEntry
+                    SystemLogs.Add(new LogEntryUI
                     {
                         Time = DateTime.Now.ToString("HH:mm:ss"),
                         Level = "Info", 
@@ -245,6 +262,9 @@ namespace Log_Sentinel.ViewModels
                         Process = "LogSentinel.exe",
                         Source = "System"
                     });
+                    
+                    // Apply filters after loading placeholder data
+                    ApplyFilters();
                 });
                 
                 RecalculateCounters();
@@ -253,15 +273,59 @@ namespace Log_Sentinel.ViewModels
 
         private void HookCollectionChanged()
         {
-            SystemLogs.CollectionChanged += (_, __) => RecalculateCounters();
+            SystemLogs.CollectionChanged += (_, __) => ApplyFilters();
+        }
+
+        private void ApplyFilters()
+        {
+            if (SystemLogs == null)
+            {
+                FilteredSystemLogs = new ObservableCollection<LogEntryUI>();
+                return;
+            }
+
+            var filtered = SystemLogs.AsEnumerable();
+
+            // Apply source filter (but only for display filtering, not data loading)
+            if (!string.IsNullOrWhiteSpace(SourceFilter) && SourceFilter != "All")
+            {
+                filtered = filtered.Where(log => 
+                    string.Equals(log.Source, SourceFilter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // Apply search text filter
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var searchLower = SearchText.ToLowerInvariant();
+                filtered = filtered.Where(log => 
+                    log.Message.ToLowerInvariant().Contains(searchLower) ||
+                    log.Level.ToLowerInvariant().Contains(searchLower) ||
+                    log.Host.ToLowerInvariant().Contains(searchLower) ||
+                    log.User.ToLowerInvariant().Contains(searchLower) ||
+                    log.Process.ToLowerInvariant().Contains(searchLower) ||
+                    log.Source.ToLowerInvariant().Contains(searchLower));
+            }
+
+            // Update filtered collection
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                FilteredSystemLogs.Clear();
+                foreach (var item in filtered)
+                {
+                    FilteredSystemLogs.Add(item);
+                }
+            });
+
+            RecalculateCounters();
         }
 
         private void RecalculateCounters()
         {
-            TotalToday = SystemLogs.Count;
-            WarningCount = SystemLogs.Count(l => string.Equals(l.Level, "Warning", StringComparison.OrdinalIgnoreCase));
-            ErrorCount = SystemLogs.Count(l => string.Equals(l.Level, "Error", StringComparison.OrdinalIgnoreCase));
-            CriticalCount = SystemLogs.Count(l => string.Equals(l.Level, "Critical", StringComparison.OrdinalIgnoreCase));
+            var logsToCount = FilteredSystemLogs?.Count > 0 ? FilteredSystemLogs : SystemLogs;
+            TotalToday = logsToCount.Count;
+            WarningCount = logsToCount.Count(l => string.Equals(l.Level, "Warning", StringComparison.OrdinalIgnoreCase));
+            ErrorCount = logsToCount.Count(l => string.Equals(l.Level, "Error", StringComparison.OrdinalIgnoreCase));
+            CriticalCount = logsToCount.Count(l => string.Equals(l.Level, "Critical", StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task RefreshDataAsync()

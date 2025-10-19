@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sysmon configuration for LogSentinel -->
+<!-- This config will generate events for common activities -->
+<Sysmon schemaversion="4.90">
+  <EventFiltering>
+    <!-- Event ID 1: Process Creation -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessCreate onmatch="exclude">
+        <CommandLine condition="is">C:\Windows\system32\svchost.exe -k</CommandLine>
+        <Image condition="is">C:\Windows\System32\conhost.exe</Image>
+      </ProcessCreate>
+    </RuleGroup>
+
+    <!-- Event ID 3: Network Connection -->
+    <RuleGroup name="" groupRelation="or">
+      <NetworkConnect onmatch="include">
+        <Protocol condition="is">tcp</Protocol>
+        <Initiated condition="is">true</Initiated>
+      </NetworkConnect>
+    </RuleGroup>
+
+    <!-- Event ID 5: Process Termination -->
+    <RuleGroup name="" groupRelation="or">
+      <ProcessTerminate onmatch="include">
+      </ProcessTerminate>
+    </RuleGroup>
+
+    <!-- Event ID 11: File Creation -->
+    <RuleGroup name="" groupRelation="or">
+      <FileCreate onmatch="include">
+        <TargetFilename condition="contains">temp</TargetFilename>
+        <TargetFilename condition="contains">tmp</TargetFilename>
+        <TargetFilename condition="end with">.exe</TargetFilename>
+        <TargetFilename condition="end with">.dll</TargetFilename>
+        <TargetFilename condition="end with">.bat</TargetFilename>
+        <TargetFilename condition="end with">.cmd</TargetFilename>
+        <TargetFilename condition="end with">.ps1</TargetFilename>
+      </FileCreate>
+    </RuleGroup>
+
+    <!-- Event ID 13: Registry Value Set -->
+    <RuleGroup name="" groupRelation="or">
+      <RegistryEvent onmatch="include">
+        <TargetObject condition="contains">Software</TargetObject>
+      </RegistryEvent>
+    </RuleGroup>
+
+    <!-- Event ID 22: DNS Query -->
+    <RuleGroup name="" groupRelation="or">
+      <DnsQuery onmatch="include">
+        <QueryName condition="end with">.com</QueryName>
+        <QueryName condition="end with">.net</QueryName>
+        <QueryName condition="end with">.org</QueryName>
+      </DnsQuery>
+    </RuleGroup>
+  </EventFiltering>
+</Sysmon>

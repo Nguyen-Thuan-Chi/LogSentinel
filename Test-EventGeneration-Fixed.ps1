@@ -1,10 +1,10 @@
-# LogSentinel Event Generation Test Script
+# LogSentinel Event Generation Test Script - UPDATED
 # Purpose: Generate test events for Windows Event Log and Sysmon ingestion
 # Run as Administrator for best results
 
-Write-Host "?????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
-Write-Host "?          LogSentinel Event Generation Test Script            ?" -ForegroundColor Cyan
-Write-Host "?????????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+Write-Host "================================================================================================" -ForegroundColor Cyan
+Write-Host "                    LogSentinel Event Generation Test Script - UPDATED                        " -ForegroundColor Cyan
+Write-Host "================================================================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if running as Administrator
@@ -226,20 +226,30 @@ if (Initialize-TestEventSource) {
     }
     
     Write-Host ""
-    Write-Host "???????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+    Write-Host "================================================================================================" -ForegroundColor Cyan
     Write-Host "Test Summary:" -ForegroundColor Cyan
     Write-Host "  Windows Event Log entries: $winEventCount" -ForegroundColor White
     Write-Host "  Sysmon events triggered:   ~$sysmonEventCount" -ForegroundColor White
-    Write-Host "???????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+    if ($sysmonEventCount -eq 0) {
+        Write-Host "  ??  Sysmon events may not be available" -ForegroundColor Yellow
+    }
+    Write-Host "================================================================================================" -ForegroundColor Cyan
     Write-Host ""
+    
+    if ($sysmonEventCount -eq 0) {
+        Write-Host "?? SYSMON FIX REQUIRED:" -ForegroundColor Red
+        Write-Host "  Run this command as Administrator to fix Sysmon:" -ForegroundColor Yellow
+        Write-Host "    .\Fix-SysmonConfig.ps1" -ForegroundColor White
+        Write-Host ""
+    }
     
     Write-Host "Next Steps:" -ForegroundColor Yellow
     Write-Host "  1. Start LogSentinel (as Administrator recommended)" -ForegroundColor White
-    Write-Host "  2. Enable event sources in appsettings.Development.json:" -ForegroundColor White
-    Write-Host "       'EventLog': true" -ForegroundColor Gray
-    Write-Host "       'Sysmon': true" -ForegroundColor Gray
-    Write-Host "  3. Navigate to Events view to see ingested events" -ForegroundColor White
-    Write-Host "  4. Filter by Source: 'WindowsEventLog' or 'Sysmon'" -ForegroundColor White
+    Write-Host "  2. Navigate to Events view to see ingested events" -ForegroundColor White
+    Write-Host "  3. Filter by Source:" -ForegroundColor White
+    Write-Host "       ? 'WindowsEventLog' for Windows events" -ForegroundColor Gray
+    Write-Host "       ? 'Sysmon' for Sysmon events" -ForegroundColor Gray
+    Write-Host "  4. Event sources are already enabled in appsettings.json" -ForegroundColor White
     Write-Host ""
     
     # Verification commands
@@ -248,6 +258,8 @@ if (Initialize-TestEventSource) {
     
     if ($sysmonEventCount -gt 0) {
         Write-Host "  Get-WinEvent -LogName Microsoft-Windows-Sysmon/Operational -MaxEvents 10" -ForegroundColor Gray
+    } else {
+        Write-Host "  [Sysmon commands will work after running Fix-SysmonConfig.ps1]" -ForegroundColor Yellow
     }
     Write-Host ""
     

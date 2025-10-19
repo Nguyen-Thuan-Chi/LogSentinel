@@ -20,14 +20,14 @@ namespace Log_Sentinel.UI
                 var scope = app.ServiceProvider.CreateScope();
                 var viewModel = scope.ServiceProvider.GetRequiredService<EventsViewModel>();
                 DataContext = viewModel;
-                EventsDataGrid.ItemsSource = viewModel.SystemLogs;
+                EventsDataGrid.ItemsSource = viewModel.FilteredSystemLogs;
             }
             else
             {
                 // Fallback for design-time
                 var viewModel = new EventsViewModel();
                 DataContext = viewModel;
-                EventsDataGrid.ItemsSource = viewModel.SystemLogs;
+                EventsDataGrid.ItemsSource = viewModel.FilteredSystemLogs;
             }
         }
     }

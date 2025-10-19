@@ -17,7 +17,7 @@ namespace Log_Sentinel.ViewModels
         private string _displayMode = "Professional"; // User | Professional
         private bool _enableSampleFiles = true;
         private bool _enableEventLog = false;
-        private bool _enableSysmon = false;
+        private bool _enableSysmon = true;
 
         public string DatabasePath
         {
