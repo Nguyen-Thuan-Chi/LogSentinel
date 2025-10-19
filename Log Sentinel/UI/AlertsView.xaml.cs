@@ -11,11 +11,10 @@ namespace Log_Sentinel.UI
         {
             InitializeComponent();
             
-            // Create a new scope and get the ViewModel
+            // Get the ViewModel from the application's service provider
             if (Application.Current is App app)
             {
-                var scope = app.ServiceProvider.CreateScope();
-                DataContext = scope.ServiceProvider.GetRequiredService<AlertsViewModel>();
+                DataContext = app.ServiceProvider.GetRequiredService<AlertsViewModel>();
             }
         }
     }

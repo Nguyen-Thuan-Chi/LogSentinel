@@ -220,8 +220,16 @@ namespace LogSentinel.BUS.Services
                     // Persist to database
                     entity = await eventRepository.AddAsync(entity);
 
+                    // Initialize rule engine if not already initialized
+                    await ruleEngine.InitializeAsync();
+
                     // Evaluate rules
-                    await ruleEngine.EvaluateEventAsync(entity);
+                    var alertTriggered = await ruleEngine.EvaluateEventAsync(entity);
+                    
+                    if (alertTriggered)
+                    {
+                        _logger.LogInformation("Alert triggered for event {EventId} from {Source}", entity.Id, entity.Source);
+                    }
                 }
                 catch (Exception ex)
                 {

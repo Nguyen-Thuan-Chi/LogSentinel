@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using Log_Sentinel.Helpers;
@@ -19,7 +20,7 @@ namespace Log_Sentinel.ViewModels
         private readonly IAlertRepository _alertRepository;
         private readonly IAlertService _alertService;
         private string _selectedSeverity = "All";
-        private bool _showAcknowledged = false;
+        private bool _showAcknowledged = true; // Show acknowledged alerts by default to see all alerts
         private AlertItem? _selectedAlert;
 
         public string SelectedSeverity
@@ -79,8 +80,13 @@ namespace Log_Sentinel.ViewModels
             // Subscribe to alert events
             _alertService.AlertCreated += OnAlertCreated;
 
-            // Load alerts asynchronously without blocking constructor
-            _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(async () => await LoadAlertsAsync());
+            // Load alerts when the view model is created
+            _ = Task.Run(async () => await LoadAlertsAsync());
+            
+            // Set up periodic refresh to catch any missed alerts
+            var refreshTimer = new System.Timers.Timer(30000); // Every 30 seconds
+            refreshTimer.Elapsed += async (sender, e) => await LoadAlertsAsync();
+            refreshTimer.Start();
         }
 
         private void OnAlertCreated(object? sender, AlertDto alert)
@@ -129,11 +135,20 @@ namespace Log_Sentinel.ViewModels
                     }
 
                     FilterAlerts();
+                    
+                    // Debug: Show count in message box for troubleshooting (remove after testing)
+                    System.Diagnostics.Debug.WriteLine($"Loaded {alerts.Count()} alerts from database");
+                    
+                    // Temporary: Show alert count in UI for debugging
+                    if (alerts.Count() == 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine("No alerts found in database");
+                    }
                 });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading alerts: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading alerts: {ex.Message}\n\nStack trace: {ex.StackTrace}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -159,6 +174,12 @@ namespace Log_Sentinel.ViewModels
             {
                 FilteredAlerts.Add(alert);
             }
+            
+            // Notify UI that the filtered collection has changed
+            OnPropertyChanged(nameof(FilteredAlerts));
+            
+            // Debug output
+            System.Diagnostics.Debug.WriteLine($"FilterAlerts: Total alerts: {Alerts.Count}, Filtered alerts: {FilteredAlerts.Count}, Selected severity: {SelectedSeverity}, Show acknowledged: {ShowAcknowledged}");
         }
 
         private async Task AcknowledgeAlertAsync(AlertItem? alertItem)

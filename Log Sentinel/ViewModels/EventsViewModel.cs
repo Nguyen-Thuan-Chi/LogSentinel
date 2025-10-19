@@ -221,13 +221,13 @@ namespace Log_Sentinel.ViewModels
 
                 if (alertRepository != null)
                 {
-                    // Load recent alerts
-                    var alerts = await alertRepository.GetRecentAsync(60); // Last hour
+                    // Load ALL alerts (not just recent ones)
+                    var alerts = await alertRepository.GetAllAsync(); 
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         EventReports.Clear();
-                        foreach (var alert in alerts.Take(50))
+                        foreach (var alert in alerts.OrderByDescending(a => a.Timestamp).Take(100))
                         {
                             EventReports.Add(new LogEntryUI
                             {

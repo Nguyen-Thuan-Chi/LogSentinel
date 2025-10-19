@@ -25,6 +25,21 @@ namespace LogSentinel.DAL.Repositories
         {
         }
 
+        public override async Task<IEnumerable<AlertEntity>> GetAllAsync()
+        {
+            return await _dbSet
+                .Include(a => a.Rule)
+                .OrderByDescending(a => a.Timestamp)
+                .ToListAsync();
+        }
+
+        public override async Task<AlertEntity?> GetByIdAsync(long id)
+        {
+            return await _dbSet
+                .Include(a => a.Rule)
+                .FirstOrDefaultAsync(a => a.Id == id);
+        }
+
         public async Task<IEnumerable<AlertEntity>> GetRecentAsync(int minutes = 5)
         {
             var cutoff = DateTime.UtcNow.AddMinutes(-minutes);

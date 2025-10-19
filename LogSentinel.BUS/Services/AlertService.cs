@@ -92,7 +92,7 @@ namespace LogSentinel.BUS.Services
             });
         }
 
-        public async Task AcknowledgeAlertAsync(long alertId, string acknowledgedBy)
+        public async Task AcknowledgeAlertAsync(long alertId, string acknowledgedBy, string? note = null)
         {
             var alert = await _alertRepository.GetByIdAsync(alertId);
             if (alert == null) return;
@@ -100,9 +100,27 @@ namespace LogSentinel.BUS.Services
             alert.IsAcknowledged = true;
             alert.AcknowledgedAt = DateTime.UtcNow;
             alert.AcknowledgedBy = acknowledgedBy;
+            
+            if (!string.IsNullOrEmpty(note))
+            {
+                alert.Description += $"\n\nNote: {note}";
+            }
 
             await _alertRepository.UpdateAsync(alert);
             _logger.LogInformation("Alert {AlertId} acknowledged by {User}", alertId, acknowledgedBy);
+        }
+
+        public async Task<int> GetAlertCountBySeverityAsync(string severity, DateTime? since = null)
+        {
+            var alerts = await _alertRepository.GetAllAsync();
+            var filtered = alerts.Where(a => a.Severity.Equals(severity, StringComparison.OrdinalIgnoreCase));
+            
+            if (since.HasValue)
+            {
+                filtered = filtered.Where(a => a.Timestamp >= since.Value);
+            }
+            
+            return filtered.Count();
         }
 
         public async Task ExportToJsonAsync(string filePath)

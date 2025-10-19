@@ -11,5 +11,9 @@ namespace LogSentinel.BUS.Models
         public string Title { get; set; } = "";
         public string Description { get; set; } = "";
         public bool IsAcknowledged { get; set; }
+        public string? AcknowledgedBy { get; set; }
+        public DateTime? AcknowledgedAt { get; set; }
+        public string EventIdsJson { get; set; } = "[]";
+        public string MetadataJson { get; set; } = "{}";
     }
 }

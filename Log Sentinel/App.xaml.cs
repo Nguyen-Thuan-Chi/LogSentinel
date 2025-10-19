@@ -124,7 +124,7 @@ namespace Log_Sentinel
                         services.AddSingleton<MainViewModel>();
                         services.AddTransient<DashboardViewModel>();
                         services.AddTransient<RuleViewModel>();
-                        services.AddTransient<AlertsViewModel>();
+                        services.AddScoped<AlertsViewModel>();
                         services.AddTransient<EventsViewModel>(provider => new EventsViewModel(provider));
                         services.AddSingleton<SettingsViewModel>();
 

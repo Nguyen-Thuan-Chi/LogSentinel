@@ -43,12 +43,22 @@ namespace LogSentinel.BUS.Services
         {
             var rules = await _ruleProvider.LoadRulesAsync();
             _compiledRules = rules.Select(CompileRule).ToList();
-            _logger.LogInformation("Loaded {Count} rules", _compiledRules.Count);
+            _logger.LogInformation("Loaded {Count} rules for evaluation", _compiledRules.Count);
+            
+            // Log each rule for debugging
+            foreach (var rule in _compiledRules)
+            {
+                _logger.LogInformation("Rule loaded: {RuleName} (Severity: {Severity})", 
+                    rule.Definition.Name, rule.Definition.Severity);
+            }
         }
 
         public async Task<bool> EvaluateEventAsync(EventEntity evt)
         {
             bool triggered = false;
+
+            _logger.LogDebug("Evaluating event {EventId} against {RuleCount} rules. Process: {Process}, Action: {Action}", 
+                evt.Id, _compiledRules.Count, evt.Process, evt.Action);
 
             foreach (var compiledRule in _compiledRules)
             {
@@ -57,12 +67,20 @@ namespace LogSentinel.BUS.Services
                     if (await EvaluateRuleAsync(compiledRule, evt))
                     {
                         triggered = true;
+                        _logger.LogInformation("Rule {RuleName} triggered by event {EventId}", 
+                            compiledRule.Definition.Name, evt.Id);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error evaluating rule {RuleName}", compiledRule.Definition.Name);
+                    _logger.LogError(ex, "Error evaluating rule {RuleName} against event {EventId}", 
+                        compiledRule.Definition.Name, evt.Id);
                 }
+            }
+
+            if (!triggered)
+            {
+                _logger.LogDebug("No rules triggered for event {EventId} (Process: {Process})", evt.Id, evt.Process);
             }
 
             return triggered;
@@ -201,7 +219,11 @@ namespace LogSentinel.BUS.Services
         private async Task TriggerAlertAsync(CompiledRule rule, List<EventEntity> matchingEvents)
         {
             var ruleEntity = await _ruleRepository.GetByNameAsync(rule.Definition.Name);
-            if (ruleEntity == null) return;
+            if (ruleEntity == null) 
+            {
+                _logger.LogWarning("Rule entity not found for rule: {RuleName}", rule.Definition.Name);
+                return;
+            }
 
             var title = rule.Definition.Action?.Title ?? $"Alert: {rule.Definition.Name}";
             var description = rule.Definition.Action?.Description ?? rule.Definition.Description;
@@ -221,12 +243,16 @@ namespace LogSentinel.BUS.Services
                     .Replace("{process}", evt.Process);
             }
 
-            await _alertService.CreateAlertAsync(ruleEntity, matchingEvents, title, description);
+            _logger.LogInformation("Creating alert for rule {RuleName}: {Title}", rule.Definition.Name, title);
+
+            var alert = await _alertService.CreateAlertAsync(ruleEntity, matchingEvents, title, description);
 
             // Update rule trigger stats
             ruleEntity.LastTriggeredAt = DateTime.UtcNow;
             ruleEntity.TriggerCount++;
             await _ruleRepository.UpdateAsync(ruleEntity);
+
+            _logger.LogInformation("Alert {AlertId} created successfully for rule {RuleName}", alert.Id, rule.Definition.Name);
         }
 
         private class CompiledRule
