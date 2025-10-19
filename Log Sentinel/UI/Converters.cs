@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -23,6 +24,32 @@ namespace Log_Sentinel.UI
         }
     }
 
+    public class BooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                // If parameter is "Invert", invert the logic
+                bool invert = parameter?.ToString() == "Invert";
+                bool result = invert ? !boolValue : boolValue;
+                return result ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Visibility visibility)
+            {
+                bool invert = parameter?.ToString() == "Invert";
+                bool result = visibility == Visibility.Visible;
+                return invert ? !result : result;
+            }
+            return false;
+        }
+    }
+
     public class SeverityToColorConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -39,6 +66,28 @@ namespace Log_Sentinel.UI
                 };
             }
             return new SolidColorBrush(Colors.Gray);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class DisplayModeToVisibilityConverter : IValueConverter
+    {
+        public string ModeName { get; set; } = "";
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string displayMode)
+            {
+                // Show column if displayMode matches ModeName
+                return string.Equals(displayMode, ModeName, StringComparison.OrdinalIgnoreCase) 
+                    ? Visibility.Visible 
+                    : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

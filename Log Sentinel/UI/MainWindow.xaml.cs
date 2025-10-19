@@ -30,6 +30,12 @@ namespace Log_Sentinel
             
             DataContext = _mainViewModel;
 
+            // Initialize the ComboBox to the current DisplayMode
+            if (DisplayModeComboBox != null)
+            {
+                DisplayModeComboBox.SelectedValue = _settingsViewModel.DisplayMode;
+            }
+
             // Subscribe to alert notifications and show message box
             _alertService.AlertCreated += (s, alert) =>
             {
@@ -48,6 +54,12 @@ namespace Log_Sentinel
                     }
                 });
             };
+        }
+
+        private void DisplayModeComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            // The binding automatically updates the SettingsViewModel.DisplayMode property
+            // Any ViewModels listening to PropertyChanged on SettingsViewModel will be notified
         }
 
         private void MainNavListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

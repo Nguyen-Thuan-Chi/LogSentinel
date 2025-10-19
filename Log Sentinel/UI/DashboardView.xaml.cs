@@ -26,11 +26,12 @@ namespace Log_Sentinel.UI
         {
             InitializeComponent();
             
-            // Create a new scope and get the ViewModel
+            // Create a new scope and get the ViewModels
             if (Application.Current is App app)
             {
                 var scope = app.ServiceProvider.CreateScope();
-                DataContext = scope.ServiceProvider.GetRequiredService<DashboardViewModel>();
+                var dashboardViewModel = scope.ServiceProvider.GetRequiredService<DashboardViewModel>();
+                DataContext = dashboardViewModel;
             }
         }
     }

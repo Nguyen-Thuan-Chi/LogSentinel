@@ -90,6 +90,7 @@ namespace Log_Sentinel.ViewModels
         private int _criticalCount;
         private string _sourceFilter = "All"; // All, Sample, WindowsEventLog, Sysmon
         private string _searchText = string.Empty;
+        private string _displayMode = "Professional"; // User, Professional
         private bool _disposed = false;
 
         public ObservableCollection<LogEntryUI> SystemLogs
@@ -156,26 +157,68 @@ namespace Log_Sentinel.ViewModels
             }
         }
 
+        public string DisplayMode
+        {
+            get => _displayMode;
+            set
+            {
+                _displayMode = value;
+                OnPropertyChanged(nameof(DisplayMode));
+                // Không cần ApplyFilters vì DisplayMode chỉ ảnh hưởng đến UI display
+            }
+        }
+
         public EventsViewModel()
         {
             // Default constructor for design-time
             _refreshTimer = new System.Timers.Timer(5000); // Refresh every 5 seconds
-            _refreshTimer.Elapsed += async (sender, e) => await RefreshDataAsync();
+            _refreshTimer.Elapsed += async (sender, e) =>
+            {
+                try
+                {
+                    await RefreshDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error in timer refresh: {ex.Message}");
+                }
+            };
             HookCollectionChanged();
         }
 
         public EventsViewModel(IServiceProvider serviceProvider) : this()
         {
             _serviceProvider = serviceProvider;
-            _refreshTimer.Start(); // Start auto-refresh for real data
-            _ = LoadDataAsync();
+            try
+            {
+                _refreshTimer.Start(); // Start auto-refresh for real data
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await LoadDataAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error in initial load: {ex.Message}");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error starting ViewModel: {ex.Message}");
+            }
         }
 
         private async Task LoadDataAsync()
         {
             try
             {
-                if (_serviceProvider == null) return;
+                if (_serviceProvider == null) 
+                {
+                    await LoadFallbackDataAsync();
+                    return;
+                }
 
                 using var scope = _serviceProvider.CreateScope();
                 var eventRepository = scope.ServiceProvider.GetService<IEventRepository>();
@@ -188,35 +231,44 @@ namespace Log_Sentinel.ViewModels
                     var tomorrow = today.AddDays(1);
                     var events = await eventRepository.GetByDateRangeAsync(today, tomorrow);
 
-                    Application.Current.Dispatcher.Invoke(() =>
+                    if (Application.Current?.Dispatcher != null)
                     {
-                        SystemLogs.Clear();
-                        foreach (var evt in events.Take(100))
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            var detailsPreview = string.IsNullOrEmpty(evt.DetailsJson) 
-                                ? "" 
-                                : evt.DetailsJson.Substring(0, Math.Min(50, evt.DetailsJson.Length));
-                            var action = evt.Action ?? "";
-                            
-                            SystemLogs.Add(new LogEntryUI
+                            try
                             {
-                                Id = evt.Id,
-                                Time = evt.EventTime.ToString("HH:mm:ss"),
-                                Level = evt.Level ?? "Info",
-                                Message = action + (string.IsNullOrEmpty(detailsPreview) ? "" : " - " + detailsPreview),
-                                Host = evt.Host ?? "",
-                                User = evt.User ?? "",
-                                Process = evt.Process ?? "",
-                                Source = evt.Source ?? "Sample"
-                            });
-                        }
+                                SystemLogs.Clear();
+                                foreach (var evt in events.Take(100))
+                                {
+                                    if (evt == null) continue;
 
-                        // Apply filters after loading data
-                        ApplyFilters();
-                        
-                        // Total count is from all events, not filtered
-                        // Individual counts will be calculated in RecalculateCounters
-                    });
+                                    var detailsPreview = string.IsNullOrEmpty(evt.DetailsJson) 
+                                        ? "" 
+                                        : evt.DetailsJson.Substring(0, Math.Min(50, evt.DetailsJson.Length));
+                                    var action = evt.Action ?? "";
+                                    
+                                    SystemLogs.Add(new LogEntryUI
+                                    {
+                                        Id = evt.Id,
+                                        Time = evt.EventTime.ToString("HH:mm:ss"),
+                                        Level = evt.Level ?? "Info",
+                                        Message = action + (string.IsNullOrEmpty(detailsPreview) ? "" : " - " + detailsPreview),
+                                        Host = evt.Host ?? "",
+                                        User = evt.User ?? "",
+                                        Process = evt.Process ?? "",
+                                        Source = evt.Source ?? "Sample"
+                                    });
+                                }
+
+                                // Apply filters after loading data
+                                ApplyFilters();
+                            }
+                            catch (Exception uiEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error updating UI: {uiEx.Message}");
+                            }
+                        });
+                    }
                 }
 
                 if (alertRepository != null)
@@ -224,113 +276,213 @@ namespace Log_Sentinel.ViewModels
                     // Load ALL alerts (not just recent ones)
                     var alerts = await alertRepository.GetAllAsync(); 
 
-                    Application.Current.Dispatcher.Invoke(() =>
+                    if (Application.Current?.Dispatcher != null)
                     {
-                        EventReports.Clear();
-                        foreach (var alert in alerts.OrderByDescending(a => a.Timestamp).Take(100))
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            EventReports.Add(new LogEntryUI
+                            try
                             {
-                                Id = alert.Id,
-                                Time = alert.Timestamp.ToString("HH:mm:ss"),
-                                Level = alert.Severity,
-                                Message = alert.Title,
-                                Host = alert.RuleName,
-                                User = alert.IsAcknowledged ? "Acknowledged" : "New"
-                            });
-                        }
-                    });
+                                EventReports.Clear();
+                                foreach (var alert in alerts.OrderByDescending(a => a.Timestamp).Take(100))
+                                {
+                                    if (alert == null) continue;
+
+                                    EventReports.Add(new LogEntryUI
+                                    {
+                                        Id = alert.Id,
+                                        Time = alert.Timestamp.ToString("HH:mm:ss"),
+                                        Level = alert.Severity ?? "Medium",
+                                        Message = alert.Title ?? "Unknown Alert",
+                                        Host = alert.RuleName ?? "Unknown Rule",
+                                        User = alert.IsAcknowledged ? "Acknowledged" : "New"
+                                    });
+                                }
+                            }
+                            catch (Exception uiEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Error updating alerts UI: {uiEx.Message}");
+                            }
+                        });
+                    }
                 }
 
-                RecalculateCounters();
+                // Recalculate counters on UI thread
+                if (Application.Current?.Dispatcher != null)
+                {
+                    await Application.Current.Dispatcher.InvokeAsync(() => RecalculateCounters());
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading data: {ex.Message}");
-                
-                // Show message that no real data is available yet
-                Application.Current.Dispatcher.Invoke(() =>
+                await LoadFallbackDataAsync();
+            }
+        }
+
+        private async Task LoadFallbackDataAsync()
+        {
+            try
+            {
+                if (Application.Current?.Dispatcher != null)
                 {
-                    SystemLogs.Clear();
-                    SystemLogs.Add(new LogEntryUI
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
                     {
-                        Time = DateTime.Now.ToString("HH:mm:ss"),
-                        Level = "Info", 
-                        Message = "Waiting for real-time events from Windows Event Log and Sysmon...",
-                        Host = "LogSentinel",
-                        User = "System",
-                        Process = "LogSentinel.exe",
-                        Source = "System"
+                        SystemLogs.Clear();
+                        SystemLogs.Add(new LogEntryUI
+                        {
+                            Time = DateTime.Now.ToString("HH:mm:ss"),
+                            Level = "Info", 
+                            Message = "Waiting for real-time events from Windows Event Log and Sysmon...",
+                            Host = "LogSentinel",
+                            User = "System",
+                            Process = "LogSentinel.exe",
+                            Source = "System"
+                        });
+                        
+                        // Apply filters after loading placeholder data
+                        ApplyFilters();
+                        RecalculateCounters();
                     });
-                    
-                    // Apply filters after loading placeholder data
-                    ApplyFilters();
-                });
-                
-                RecalculateCounters();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading fallback data: {ex.Message}");
             }
         }
 
         private void HookCollectionChanged()
         {
-            SystemLogs.CollectionChanged += (_, __) => ApplyFilters();
+            try
+            {
+                SystemLogs.CollectionChanged += (sender, e) =>
+                {
+                    try
+                    {
+                        ApplyFilters();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error in collection changed handler: {ex.Message}");
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error hooking collection changed: {ex.Message}");
+            }
         }
 
         private void ApplyFilters()
         {
-            if (SystemLogs == null)
+            try
             {
-                FilteredSystemLogs = new ObservableCollection<LogEntryUI>();
-                return;
-            }
-
-            var filtered = SystemLogs.AsEnumerable();
-
-            // Apply source filter (but only for display filtering, not data loading)
-            if (!string.IsNullOrWhiteSpace(SourceFilter) && SourceFilter != "All")
-            {
-                filtered = filtered.Where(log => 
-                    string.Equals(log.Source, SourceFilter, StringComparison.OrdinalIgnoreCase));
-            }
-
-            // Apply search text filter
-            if (!string.IsNullOrWhiteSpace(SearchText))
-            {
-                var searchLower = SearchText.ToLowerInvariant();
-                filtered = filtered.Where(log => 
-                    log.Message.ToLowerInvariant().Contains(searchLower) ||
-                    log.Level.ToLowerInvariant().Contains(searchLower) ||
-                    log.Host.ToLowerInvariant().Contains(searchLower) ||
-                    log.User.ToLowerInvariant().Contains(searchLower) ||
-                    log.Process.ToLowerInvariant().Contains(searchLower) ||
-                    log.Source.ToLowerInvariant().Contains(searchLower));
-            }
-
-            // Update filtered collection
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                FilteredSystemLogs.Clear();
-                foreach (var item in filtered)
+                if (SystemLogs == null)
                 {
-                    FilteredSystemLogs.Add(item);
+                    if (Application.Current?.Dispatcher != null)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            FilteredSystemLogs = new ObservableCollection<LogEntryUI>();
+                        });
+                    }
+                    return;
                 }
-            });
 
-            RecalculateCounters();
+                var filtered = SystemLogs.AsEnumerable();
+
+                // Apply source filter (but only for display filtering, not data loading)
+                if (!string.IsNullOrWhiteSpace(SourceFilter) && SourceFilter != "All")
+                {
+                    filtered = filtered.Where(log => 
+                        string.Equals(log?.Source, SourceFilter, StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Apply search text filter
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var searchLower = SearchText.ToLowerInvariant();
+                    filtered = filtered.Where(log => log != null && (
+                        (log.Message?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (log.Level?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (log.Host?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (log.User?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (log.Process?.ToLowerInvariant().Contains(searchLower) ?? false) ||
+                        (log.Source?.ToLowerInvariant().Contains(searchLower) ?? false)));
+                }
+
+                // Update filtered collection on UI thread
+                if (Application.Current?.Dispatcher != null)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        try
+                        {
+                            FilteredSystemLogs.Clear();
+                            foreach (var item in filtered.Where(x => x != null))
+                            {
+                                FilteredSystemLogs.Add(item);
+                            }
+                            RecalculateCounters();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Error updating filtered collection: {ex.Message}");
+                        }
+                    });
+                }
+                else
+                {
+                    // Fallback for non-UI thread scenarios
+                    RecalculateCounters();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error applying filters: {ex.Message}");
+            }
         }
 
         private void RecalculateCounters()
         {
-            var logsToCount = FilteredSystemLogs?.Count > 0 ? FilteredSystemLogs : SystemLogs;
-            TotalToday = logsToCount.Count;
-            WarningCount = logsToCount.Count(l => string.Equals(l.Level, "Warning", StringComparison.OrdinalIgnoreCase));
-            ErrorCount = logsToCount.Count(l => string.Equals(l.Level, "Error", StringComparison.OrdinalIgnoreCase));
-            CriticalCount = logsToCount.Count(l => string.Equals(l.Level, "Critical", StringComparison.OrdinalIgnoreCase));
+            try
+            {
+                var logsToCount = FilteredSystemLogs?.Count > 0 ? FilteredSystemLogs : SystemLogs;
+                if (logsToCount == null)
+                {
+                    TotalToday = 0;
+                    WarningCount = 0;
+                    ErrorCount = 0;
+                    CriticalCount = 0;
+                    return;
+                }
+
+                TotalToday = logsToCount.Count;
+                WarningCount = logsToCount.Count(l => l != null && string.Equals(l.Level, "Warning", StringComparison.OrdinalIgnoreCase));
+                ErrorCount = logsToCount.Count(l => l != null && string.Equals(l.Level, "Error", StringComparison.OrdinalIgnoreCase));
+                CriticalCount = logsToCount.Count(l => l != null && string.Equals(l.Level, "Critical", StringComparison.OrdinalIgnoreCase));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error recalculating counters: {ex.Message}");
+                // Set safe defaults
+                TotalToday = 0;
+                WarningCount = 0;
+                ErrorCount = 0;
+                CriticalCount = 0;
+            }
         }
 
         public async Task RefreshDataAsync()
         {
-            await LoadDataAsync();
+            try
+            {
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error refreshing data: {ex.Message}");
+            }
         }
 
         public void Dispose()
@@ -345,8 +497,15 @@ namespace Log_Sentinel.ViewModels
             {
                 if (disposing)
                 {
-                    _refreshTimer?.Stop();
-                    _refreshTimer?.Dispose();
+                    try
+                    {
+                        _refreshTimer?.Stop();
+                        _refreshTimer?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error disposing timer: {ex.Message}");
+                    }
                 }
                 _disposed = true;
             }
