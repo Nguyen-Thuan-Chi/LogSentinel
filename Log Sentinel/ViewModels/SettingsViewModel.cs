@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using Log_Sentinel.Helpers;
+using LogSentinel.DAL.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Log_Sentinel.ViewModels
 {
@@ -112,11 +114,13 @@ namespace Log_Sentinel.ViewModels
 
         public ICommand SaveSettingsCommand { get; }
         public ICommand BrowseDatabaseCommand { get; }
+        public ICommand ClearDataCommand { get; }
 
         public SettingsViewModel()
         {
             SaveSettingsCommand = new RelayCommand(_ => SaveSettings());
             BrowseDatabaseCommand = new RelayCommand(_ => BrowseDatabase());
+            ClearDataCommand = new RelayCommand(_ => ClearData());
 
             // Load initial database size
             UpdateDatabaseSize();
@@ -168,6 +172,51 @@ namespace Log_Sentinel.ViewModels
             catch
             {
                 DatabaseSize = "Unknown";
+            }
+        }
+
+        private async void ClearData()
+        {
+            var result = MessageBox.Show(
+                "Are you sure you want to delete all events and alerts? This action cannot be undone.",
+                "Confirm Clear Data",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    // Create a new instance of AppDbContext
+                    var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+                    optionsBuilder.UseSqlite($"Data Source={DatabasePath}");
+
+                    using var context = new AppDbContext(optionsBuilder.Options);
+
+                    // Delete all records from Events and Alerts tables
+                    await context.Database.ExecuteSqlRawAsync("DELETE FROM Events");
+                    await context.Database.ExecuteSqlRawAsync("DELETE FROM Alerts");
+
+                    // Save changes
+                    await context.SaveChangesAsync();
+
+                    // Update database size
+                    UpdateDatabaseSize();
+
+                    MessageBox.Show(
+                        "All event and alert data has been cleared successfully!",
+                        "Data Cleared",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        $"Error clearing data: {ex.Message}",
+                        "Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
             }
         }
 

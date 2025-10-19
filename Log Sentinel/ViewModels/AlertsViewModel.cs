@@ -7,75 +7,52 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Log_Sentinel.Helpers;
+using Log_Sentinel.UI;
 using LogSentinel.BUS.Interfaces;
 using LogSentinel.BUS.Models;
+using LogSentinel.DAL.Data;
 using LogSentinel.DAL.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 
 namespace Log_Sentinel.ViewModels
 {
-    public class AlertsViewModel : INotifyPropertyChanged
+    public partial class AlertsViewModel : ObservableObject
     {
         private readonly IAlertRepository _alertRepository;
         private readonly IAlertService _alertService;
-        private string _selectedSeverity = "All";
-        private bool _showAcknowledged = true; // Show acknowledged alerts by default to see all alerts
-        private AlertItem? _selectedAlert;
+        private readonly IServiceProvider _serviceProvider;
+        
+        [ObservableProperty]
+        private string selectedSeverity = "All";
+        
+        [ObservableProperty]
+        private bool showAcknowledged = true; // Show acknowledged alerts by default to see all alerts
+        
+        [ObservableProperty]
+        private AlertItem? selectedAlert;
 
-        public string SelectedSeverity
+        partial void OnSelectedSeverityChanged(string value)
         {
-            get => _selectedSeverity;
-            set
-            {
-                _selectedSeverity = value;
-                OnPropertyChanged();
-                FilterAlerts();
-            }
+            FilterAlerts();
         }
 
-        public bool ShowAcknowledged
+        partial void OnShowAcknowledgedChanged(bool value)
         {
-            get => _showAcknowledged;
-            set
-            {
-                _showAcknowledged = value;
-                OnPropertyChanged();
-                FilterAlerts();
-            }
-        }
-
-        public AlertItem? SelectedAlert
-        {
-            get => _selectedAlert;
-            set
-            {
-                _selectedAlert = value;
-                OnPropertyChanged();
-            }
+            FilterAlerts();
         }
 
         public ObservableCollection<AlertItem> Alerts { get; } = new();
         public ObservableCollection<AlertItem> FilteredAlerts { get; } = new();
 
-        public ICommand RefreshCommand { get; }
-        public ICommand AcknowledgeAlertCommand { get; }
-        public ICommand AcknowledgeAllCommand { get; }
-        public ICommand ViewDetailsCommand { get; }
-        public ICommand DeleteAlertCommand { get; }
-        public ICommand ExportCsvCommand { get; }
-
-        public AlertsViewModel(IAlertRepository alertRepository, IAlertService alertService)
+        public AlertsViewModel(IAlertRepository alertRepository, IAlertService alertService, IServiceProvider serviceProvider)
         {
             _alertRepository = alertRepository;
             _alertService = alertService;
-
-            RefreshCommand = new RelayCommand(async _ => await LoadAlertsAsync());
-            AcknowledgeAlertCommand = new RelayCommand(async param => await AcknowledgeAlertAsync(param as AlertItem), param => param is AlertItem);
-            AcknowledgeAllCommand = new RelayCommand(async _ => await AcknowledgeAllAlertsAsync());
-            ViewDetailsCommand = new RelayCommand(param => ViewAlertDetails(param as AlertItem), param => param is AlertItem);
-            DeleteAlertCommand = new RelayCommand(async param => await DeleteAlertAsync(param as AlertItem), param => param is AlertItem);
-            ExportCsvCommand = new RelayCommand(async _ => await ExportToCsvAsync());
+            _serviceProvider = serviceProvider;
 
             // Subscribe to alert events
             _alertService.AlertCreated += OnAlertCreated;
@@ -87,6 +64,77 @@ namespace Log_Sentinel.ViewModels
             var refreshTimer = new System.Timers.Timer(30000); // Every 30 seconds
             refreshTimer.Elapsed += async (sender, e) => await LoadAlertsAsync();
             refreshTimer.Start();
+        }
+
+        [RelayCommand]
+        private async Task LoadAlerts()
+        {
+            await LoadAlertsAsync();
+        }
+
+        [RelayCommand]
+        private async Task AcknowledgeAlert(AlertItem? alertItem)
+        {
+            await AcknowledgeAlertAsync(alertItem);
+        }
+
+        [RelayCommand]
+        private async Task AcknowledgeAll()
+        {
+            await AcknowledgeAllAlertsAsync();
+        }
+
+        [RelayCommand(CanExecute = nameof(CanShowDetail))]
+        private async Task ShowDetail()
+        {
+            // Defensive null-check for SelectedAlert
+            if (SelectedAlert == null) return;
+
+            try
+            {
+                // Get the full AlertEntity from the database
+                var alertEntity = await _alertRepository.GetByIdAsync(SelectedAlert.Id);
+                if (alertEntity != null)
+                {
+                    // Create and show the detail window with safe exception handling
+                    var detailWindow = new AlertDetailView(alertEntity, _serviceProvider);
+                    detailWindow.Owner = Application.Current.MainWindow;
+                    detailWindow.ShowDialog();
+                }
+                else
+                {
+                    MessageBox.Show("Alert not found in database.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception details for debugging
+                System.Diagnostics.Debug.WriteLine($"Error in ShowDetail: {ex}");
+                MessageBox.Show($"Error opening alert details: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanShowDetail()
+        {
+            return SelectedAlert != null;
+        }
+
+        [RelayCommand]
+        private void ViewDetails(AlertItem? alertItem)
+        {
+            ViewAlertDetails(alertItem);
+        }
+
+        [RelayCommand]
+        private async Task DeleteAlert(AlertItem? alertItem)
+        {
+            await DeleteAlertAsync(alertItem);
+        }
+
+        [RelayCommand]
+        private async Task ExportCsv()
+        {
+            await ExportToCsvAsync();
         }
 
         private void OnAlertCreated(object? sender, AlertDto alert)
@@ -194,7 +242,6 @@ namespace Log_Sentinel.ViewModels
                 alertItem.AcknowledgedBy = Environment.UserName;
                 alertItem.AcknowledgedAt = DateTime.UtcNow;
                 
-                OnPropertyChanged(nameof(FilteredAlerts));
                 FilterAlerts();
             }
             catch (Exception ex)

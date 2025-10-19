@@ -1,0 +1,284 @@
+<Window x:Class="Log_Sentinel.UI.AlertDetailView"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+Title="Alert Details" Height="600" Width="800"
+WindowStartupLocation="CenterOwner"
+Background="#2563EB"
+Foreground="White"
+BorderThickness="0"
+Padding="12,8"
+FontWeight="Medium"
+TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+TextElement.FontWeight="Regular"
+TextElement.FontSize="13"
+TextOptions.TextFormattingMode="Ideal"
+TextOptions.TextRenderingMode="Auto"
+FontFamily="{DynamicResource MaterialDesignFont}"
+Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryHueMidBrush}"/>
+        </Style>
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="Alert Details" 
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Margin="0,0,0,20"
+                   Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+
+        <!-- Loading Indicator -->
+        <ProgressBar Grid.Row="1" 
+                     IsIndeterminate="True" 
+                     Height="4"
+                     Margin="0,0,0,10"
+                     Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- Error Message -->
+        <materialDesign:Card Grid.Row="1" 
+                            Padding="15" 
+                            Margin="0,0,0,10"
+                            Background="{DynamicResource MaterialDesignValidationErrorBrush}"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="Error" 
+                          FontWeight="Bold" 
+                          Foreground="White" 
+                          Margin="0,0,0,5"/>
+                <TextBlock Text="{Binding ErrorMessage}" 
+                          Foreground="White" 
+                          TextWrapping="Wrap"/>
+            </StackPanel>
+        </materialDesign:Card>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Alert Information Card -->
+                <materialDesign:Card Padding="20" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Alert Information" Style="{StaticResource SectionHeaderStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- ID -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Alert ID" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedAlert.Id, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Alert ID"/>
+                            </StackPanel>
+
+                            <!-- Rule Name -->
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="Rule Name" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedAlert.RuleName, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Rule Name"/>
+                            </StackPanel>
+
+                            <!-- Severity -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Severity" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedAlert.Severity, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Severity"/>
+                            </StackPanel>
+
+                            <!-- Timestamp -->
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="Timestamp" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding FormattedTimestamp, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Timestamp"/>
+                            </StackPanel>
+
+                            <!-- Status -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Status" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding StatusDisplay, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Status"/>
+                            </StackPanel>
+
+                            <!-- Acknowledged By -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="Acknowledged By" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding AcknowledgedByDisplay, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Acknowledged By"/>
+                            </StackPanel>
+
+                            <!-- Title (Full Width) -->
+                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
+                                <TextBlock Text="Title" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedAlert.Title, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Alert Title"/>
+                            </StackPanel>
+
+                            <!-- Description (Full Width) -->
+                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
+                                <TextBlock Text="Description" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedAlert.Description, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        AcceptsReturn="True"
+                                        TextWrapping="Wrap"
+                                        MaxHeight="100"
+                                        VerticalScrollBarVisibility="Auto"
+                                        materialDesign:HintAssist.Hint="Alert Description"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Triggering Event Card -->
+                <materialDesign:Card Padding="20" Margin="0,0,0,15">
+                    <StackPanel>
+                        <TextBlock Text="Triggering Event Information" Style="{StaticResource SectionHeaderStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Event ID -->
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Event ID" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Id, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Event ID"/>
+                            </StackPanel>
+
+                            <!-- Event Time -->
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="Event Time" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding EventTimeFormatted, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Event Time"/>
+                            </StackPanel>
+
+                            <!-- Host -->
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Host" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Host, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Host"/>
+                            </StackPanel>
+
+                            <!-- User -->
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="User" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.User, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="User"/>
+                            </StackPanel>
+
+                            <!-- Process -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,15">
+                                <TextBlock Text="Process" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Process, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Process"/>
+                            </StackPanel>
+
+                            <!-- Level -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="10,0,0,15">
+                                <TextBlock Text="Level" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Level, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Event Level"/>
+                            </StackPanel>
+
+                            <!-- Action -->
+                            <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
+                                <TextBlock Text="Action" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Action, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Action"/>
+                            </StackPanel>
+
+                            <!-- Object -->
+                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
+                                <TextBlock Text="Object" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding TriggeringEvent.Object, Mode=OneWay}" 
+                                        IsReadOnly="True"
+                                        materialDesign:HintAssist.Hint="Object"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Event Details Card -->
+                <materialDesign:Card Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Event Details (JSON)" Style="{StaticResource SectionHeaderStyle}"/>
+                        
+                        <TextBox Text="{Binding EventDetailsFormatted, Mode=OneWay}" 
+                                IsReadOnly="True"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                MinHeight="150"
+                                MaxHeight="300"
+                                VerticalScrollBarVisibility="Auto"
+                                FontFamily="Consolas"
+                                FontSize="11"
+                                materialDesign:HintAssist.Hint="Event Details JSON"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Close Button -->
+        <Button Grid.Row="3" 
+                Content="Close" 
+                Width="100" 
+                Height="35"
+                HorizontalAlignment="Right"
+                Margin="0,15,0,0"
+                Click="CloseButton_Click"
+                Style="{StaticResource OptimizedButton}"/>
+    </Grid>
+</Window>
