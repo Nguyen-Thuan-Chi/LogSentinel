@@ -59,82 +59,105 @@ namespace LogSentinel.DAL.Data
                 {
                     new RuleEntity
                     {
-                        Name = "Failed Login Threshold",
-                        Description = "Detects multiple failed login attempts",
-                        Severity = "High",
-                        IsEnabled = true,
-                        YamlContent = @"name: Failed Login Threshold
-description: Detects multiple failed login attempts (Event ID 4625) from the same user
-severity: High
-enabled: true
-selection:
-  event_id: 4625
-condition:
-  count: 5
-  timeframe: 300
-  group_by: user"
-                    },
-                    new RuleEntity
-                    {
-                        Name = "Admin User Created",
-                        Description = "Detects when a user is added to the Administrators group",
-                        Severity = "Critical",
-                        IsEnabled = true,
-                        YamlContent = @"name: Admin User Created
-description: Detects when a user is added to the Administrators group
-severity: Critical
-enabled: true
-selection:
-  event_id: 4732
-condition:
-  pattern: ""(?i)(administrators|admin)"""
-                    },
-                    new RuleEntity
-                    {
-                        Name = "Suspicious PowerShell Execution",
-                        Description = "Detects PowerShell with suspicious flags",
-                        Severity = "High",
-                        IsEnabled = true,
-                        YamlContent = @"name: Suspicious PowerShell Execution
-description: Detects PowerShell with suspicious command-line flags
-severity: High
-enabled: true
-selection:
-  process: ""powershell.exe""
-condition:
-  pattern: ""(?i)(-enc|-nop|-w hidden)"""
-                    },
-                    new RuleEntity
-                    {
-                        Name = "Process Creation Monitoring",
-                        Description = "Monitors new process creation from Sysmon Event ID 1",
-                        Severity = "Medium",
-                        IsEnabled = true,
-                        YamlContent = @"name: Process Creation Monitoring
-description: Monitors new process creation from Sysmon Event ID 1
-severity: Medium
-enabled: true
-selection:
-  event_id: 1
-  source: Sysmon
-condition:
-  pattern: ""(?i)(cmd|powershell|wscript|cscript)"""
-                    },
-                    new RuleEntity
-                    {
-                        Name = "Network Connection Monitoring", 
-                        Description = "Monitors network connections from Sysmon Event ID 3",
+                        Name = "Notepad Execution",
+                        Description = "Generates an alert when notepad.exe is started",
                         Severity = "Low",
                         IsEnabled = true,
-                        YamlContent = @"name: Network Connection Monitoring
-description: Monitors network connections from Sysmon Event ID 3
+                        YamlContent = @"name: Notepad Execution
+description: Generates an alert when notepad.exe is started
 severity: Low
 enabled: true
-selection:
-  event_id: 3
-  source: Sysmon
-condition:
-  pattern: ""(?i)(443|80|22|21|23)"""
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1
+
+detection:
+  Image: 'C:\Windows\System32\notepad.exe'"
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Calculator Execution",
+                        Description = "Detects when calc.exe is executed",
+                        Severity = "Low",
+                        IsEnabled = true,
+                        YamlContent = @"name: Calculator Execution
+description: Detects when calc.exe is executed
+severity: Low
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1
+
+detection:
+  Image: 'C:\Windows\System32\calc.exe'"
+                    },
+                    new RuleEntity
+                    {
+                        Name = "PowerShell Process Creation",
+                        Description = "Detects PowerShell process creation",
+                        Severity = "Medium",
+                        IsEnabled = true,
+                        YamlContent = @"name: PowerShell Process Creation
+description: Detects PowerShell process creation
+severity: Medium
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1
+
+detection:
+  Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'"
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Command Prompt Execution",
+                        Description = "Detects command prompt execution",
+                        Severity = "Medium",
+                        IsEnabled = true,
+                        YamlContent = @"name: Command Prompt Execution
+description: Detects command prompt execution
+severity: Medium
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1
+
+detection:
+  Image: 'C:\Windows\System32\cmd.exe'"
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Failed Login Attempts",
+                        Description = "Detects failed login attempts",
+                        Severity = "High",
+                        IsEnabled = true,
+                        YamlContent = @"name: Failed Login Attempts
+description: Detects failed login attempts
+severity: High
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Security-Auditing'
+  event_id: 4625"
+                    },
+                    new RuleEntity
+                    {
+                        Name = "Any Sysmon Process Creation",
+                        Description = "Matches any Sysmon process creation event (for testing)",
+                        Severity = "Low",
+                        IsEnabled = true,
+                        YamlContent = @"name: Any Sysmon Process Creation
+description: Matches any Sysmon process creation event
+severity: Low
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1"
                     }
                 };
 

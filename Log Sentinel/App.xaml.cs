@@ -116,7 +116,7 @@ namespace Log_Sentinel
                         services.AddSingleton<IEventNormalizer, EventNormalizer>();
                         services.AddSingleton<IWindowsEventSource, WindowsEventSource>();
                         services.AddScoped<IRuleProvider, RuleProvider>();
-                        services.AddScoped<IRuleEngine, RuleEngine>();
+                        services.AddScoped<IRuleEngine, RuleEngineService>();
                         services.AddScoped<IAlertService, AlertService>();
                         services.AddScoped<IEventImporter, EventImporter>();
 

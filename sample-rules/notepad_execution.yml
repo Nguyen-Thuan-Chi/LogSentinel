@@ -1,0 +1,12 @@
+# Example: notepad_execution.yml
+name: Notepad Execution
+description: Generates an alert when notepad.exe is started.
+severity: Low
+enabled: true
+
+log_source:
+  provider: 'Microsoft-Windows-Sysmon'
+  event_id: 1
+
+detection:
+  Image: 'C:\Windows\System32\notepad.exe'
