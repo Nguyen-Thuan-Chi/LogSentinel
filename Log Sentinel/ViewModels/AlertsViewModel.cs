@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -25,9 +26,10 @@ namespace Log_Sentinel.ViewModels
         private readonly IAlertRepository _alertRepository;
         private readonly IAlertService _alertService;
         private readonly IServiceProvider _serviceProvider;
+        private List<AlertItem> _allAlerts = new();
         
         [ObservableProperty]
-        private string selectedSeverity = "All";
+        private string selectedSeverityFilter = "All";
         
         [ObservableProperty]
         private bool showAcknowledged = true; // Show acknowledged alerts by default to see all alerts
@@ -35,18 +37,19 @@ namespace Log_Sentinel.ViewModels
         [ObservableProperty]
         private AlertItem? selectedAlert;
 
-        partial void OnSelectedSeverityChanged(string value)
+        partial void OnSelectedSeverityFilterChanged(string value)
         {
-            FilterAlerts();
+            ApplyFilter();
         }
 
         partial void OnShowAcknowledgedChanged(bool value)
         {
-            FilterAlerts();
+            ApplyFilter();
         }
 
-        public ObservableCollection<AlertItem> Alerts { get; } = new();
         public ObservableCollection<AlertItem> FilteredAlerts { get; } = new();
+        
+        public List<string> SeverityLevels { get; } = new() { "All", "Critical", "High", "Medium", "Low" };
 
         public AlertsViewModel(IAlertRepository alertRepository, IAlertService alertService, IServiceProvider serviceProvider)
         {
@@ -68,6 +71,12 @@ namespace Log_Sentinel.ViewModels
 
         [RelayCommand]
         private async Task LoadAlerts()
+        {
+            await LoadAlertsAsync();
+        }
+
+        [RelayCommand]
+        private async Task Refresh()
         {
             await LoadAlertsAsync();
         }
@@ -152,8 +161,8 @@ namespace Log_Sentinel.ViewModels
                     IsAcknowledged = alert.IsAcknowledged
                 };
 
-                Alerts.Insert(0, alertItem);
-                FilterAlerts();
+                _allAlerts.Insert(0, alertItem);
+                ApplyFilter();
             });
         }
 
@@ -165,10 +174,10 @@ namespace Log_Sentinel.ViewModels
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    Alerts.Clear();
+                    _allAlerts.Clear();
                     foreach (var alert in alerts.OrderByDescending(a => a.Timestamp))
                     {
-                        Alerts.Add(new AlertItem
+                        _allAlerts.Add(new AlertItem
                         {
                             Id = alert.Id,
                             RuleName = alert.RuleName,
@@ -182,7 +191,7 @@ namespace Log_Sentinel.ViewModels
                         });
                     }
 
-                    FilterAlerts();
+                    ApplyFilter();
                     
                     // Debug: Show count in message box for troubleshooting (remove after testing)
                     System.Diagnostics.Debug.WriteLine($"Loaded {alerts.Count()} alerts from database");
@@ -200,16 +209,16 @@ namespace Log_Sentinel.ViewModels
             }
         }
 
-        private void FilterAlerts()
+        private void ApplyFilter()
         {
             FilteredAlerts.Clear();
 
-            var filtered = Alerts.AsEnumerable();
+            var filtered = _allAlerts.AsEnumerable();
 
             // Filter by severity
-            if (SelectedSeverity != "All")
+            if (SelectedSeverityFilter != "All")
             {
-                filtered = filtered.Where(a => a.Severity.Equals(SelectedSeverity, StringComparison.OrdinalIgnoreCase));
+                filtered = filtered.Where(a => a.Severity.Equals(SelectedSeverityFilter, StringComparison.OrdinalIgnoreCase));
             }
 
             // Filter by acknowledgment status
@@ -227,7 +236,7 @@ namespace Log_Sentinel.ViewModels
             OnPropertyChanged(nameof(FilteredAlerts));
             
             // Debug output
-            System.Diagnostics.Debug.WriteLine($"FilterAlerts: Total alerts: {Alerts.Count}, Filtered alerts: {FilteredAlerts.Count}, Selected severity: {SelectedSeverity}, Show acknowledged: {ShowAcknowledged}");
+            System.Diagnostics.Debug.WriteLine($"ApplyFilter: Total alerts: {_allAlerts.Count}, Filtered alerts: {FilteredAlerts.Count}, Selected severity: {SelectedSeverityFilter}, Show acknowledged: {ShowAcknowledged}");
         }
 
         private async Task AcknowledgeAlertAsync(AlertItem? alertItem)
@@ -242,7 +251,7 @@ namespace Log_Sentinel.ViewModels
                 alertItem.AcknowledgedBy = Environment.UserName;
                 alertItem.AcknowledgedAt = DateTime.UtcNow;
                 
-                FilterAlerts();
+                ApplyFilter();
             }
             catch (Exception ex)
             {
@@ -252,7 +261,7 @@ namespace Log_Sentinel.ViewModels
 
         private async Task AcknowledgeAllAlertsAsync()
         {
-            var unacknowledged = Alerts.Where(a => !a.IsAcknowledged).ToList();
+            var unacknowledged = _allAlerts.Where(a => !a.IsAcknowledged).ToList();
 
             if (!unacknowledged.Any())
             {
@@ -278,7 +287,7 @@ namespace Log_Sentinel.ViewModels
                         alert.AcknowledgedAt = DateTime.UtcNow;
                     }
 
-                    FilterAlerts();
+                    ApplyFilter();
                     MessageBox.Show($"Successfully acknowledged {unacknowledged.Count} alerts.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -328,8 +337,8 @@ namespace Log_Sentinel.ViewModels
                     if (alert != null)
                     {
                         await _alertRepository.DeleteAsync(alert);
-                        Alerts.Remove(alertItem);
-                        FilterAlerts();
+                        _allAlerts.Remove(alertItem);
+                        ApplyFilter();
                         MessageBox.Show("Alert deleted successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }

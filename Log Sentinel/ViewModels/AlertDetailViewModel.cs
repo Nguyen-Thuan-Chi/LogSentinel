@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LogSentinel.DAL.Data;
@@ -22,7 +22,7 @@ namespace Log_Sentinel.ViewModels
         private bool isLoading = true;
 
         [ObservableProperty]
-        private string errorMessage = string.Empty;
+        private string? errorMessage;
 
         public AlertDetailViewModel(AlertEntity alertEntity, IServiceProvider? serviceProvider = null)
         {
@@ -39,10 +39,11 @@ namespace Log_Sentinel.ViewModels
             try
             {
                 IsLoading = true;
-                ErrorMessage = string.Empty;
+                ErrorMessage = null;
 
                 if (_serviceProvider == null || SelectedAlert == null)
                 {
+                    ErrorMessage = "Unable to load alert details: Missing dependencies";
                     IsLoading = false;
                     return;
                 }
@@ -60,13 +61,27 @@ namespace Log_Sentinel.ViewModels
                         // Get the first triggering event
                         var eventEntity = await eventRepository.GetByIdAsync(eventIds[0]);
                         
-                        // Update properties safely
-                        TriggeringEvent = eventEntity;
+                        if (eventEntity == null)
+                        {
+                            ErrorMessage = "The triggering event could not be found in the database";
+                        }
+                        else
+                        {
+                            // Update properties safely on UI thread
+                            await Application.Current.Dispatcher.InvokeAsync(() =>
+                            {
+                                TriggeringEvent = eventEntity;
+                            });
+                        }
+                    }
+                    else
+                    {
+                        ErrorMessage = "No triggering events found for this alert";
                     }
                 }
                 catch (System.Text.Json.JsonException jsonEx)
                 {
-                    ErrorMessage = "Invalid event data format";
+                    ErrorMessage = "Invalid event data format in alert";
                     System.Diagnostics.Debug.WriteLine($"JSON parsing error: {jsonEx.Message}");
                 }
             }
@@ -77,7 +92,10 @@ namespace Log_Sentinel.ViewModels
             }
             finally
             {
-                IsLoading = false;
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    IsLoading = false;
+                });
             }
         }
 
@@ -86,7 +104,7 @@ namespace Log_Sentinel.ViewModels
         
         public string FormattedAcknowledgedAt => SelectedAlert?.AcknowledgedAt?.ToString("yyyy-MM-dd HH:mm:ss UTC") ?? "Not acknowledged";
         
-        public string StatusDisplay => SelectedAlert?.IsAcknowledged == true ? "Acknowledged" : "New";
+        public string StatusDisplay => SelectedAlert?.IsAcknowledged == true ? "✅ Acknowledged" : "🔴 New";
         
         public string AcknowledgedByDisplay => SelectedAlert?.IsAcknowledged == true 
             ? SelectedAlert.AcknowledgedBy ?? "Unknown" 
@@ -103,14 +121,18 @@ namespace Log_Sentinel.ViewModels
                 try
                 {
                     // Try to format JSON nicely
-                    var jsonDoc = System.Text.Json.JsonDocument.Parse(TriggeringEvent.DetailsJson ?? "{}");
+                    if (string.IsNullOrWhiteSpace(TriggeringEvent.DetailsJson))
+                        return "{}";
+                        
+                    var jsonDoc = System.Text.Json.JsonDocument.Parse(TriggeringEvent.DetailsJson);
                     return System.Text.Json.JsonSerializer.Serialize(jsonDoc, new System.Text.Json.JsonSerializerOptions 
                     { 
                         WriteIndented = true 
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"Error formatting JSON: {ex.Message}");
                     return TriggeringEvent.DetailsJson ?? "{}";
                 }
             }

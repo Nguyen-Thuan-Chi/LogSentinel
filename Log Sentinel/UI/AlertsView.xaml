@@ -56,29 +56,29 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
             <!-- Filter Options -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,15">
                 <TextBlock Text="Severity:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold"/>
-                <ComboBox SelectedItem="{Binding SelectedSeverity, Mode=TwoWay}"
+                <ComboBox ItemsSource="{Binding SeverityLevels}"
+                          SelectedItem="{Binding SelectedSeverityFilter, Mode=TwoWay}"
                           Width="150"
                           Height="35"
                           Padding="10"
                           BorderBrush="#CBD5E1"
-                          BorderThickness="1">
-                    <ComboBoxItem Content="All" IsSelected="True"/>
-                    <ComboBoxItem Content="Critical"/>
-                    <ComboBoxItem Content="High"/>
-                    <ComboBoxItem Content="Medium"/>
-                    <ComboBoxItem Content="Low"/>
-                </ComboBox>
+                          BorderThickness="1"/>
 
                 <CheckBox Content="Show Acknowledged" 
                           IsChecked="{Binding ShowAcknowledged}"
                           VerticalAlignment="Center"
                           Margin="20,0,0,0"/>
                           
-                <TextBlock Text="{Binding Alerts.Count, StringFormat='Total: {0}'}" 
-                           VerticalAlignment="Center"
+                <TextBlock VerticalAlignment="Center"
                            Margin="20,0,0,0"
                            FontSize="12"
-                           Foreground="#6B7280"/>
+                           Foreground="#6B7280">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="Total: {0}">
+                            <Binding Path="FilteredAlerts.Count"/>
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
             </StackPanel>
 
             <!-- Alerts DataGrid -->
