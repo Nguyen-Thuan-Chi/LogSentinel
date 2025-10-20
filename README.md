@@ -1,393 +1,210 @@
-# LogSentinel
+# LogSentinel - Security Event Monitoring & Alert System
 
-**Security Event Monitoring and Alert System**
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Nguyen-Thuan-Chi/LogSentinel)
+[![.NET Version](https://img.shields.io/badge/.NET-9.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/9.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-LogSentinel is a comprehensive security information and event management (SIEM) solution built with .NET 9 and WPF. It provides real-time monitoring, rule-based alerting, and advanced analytics for Windows security events and custom log files.
+**LogSentinel** is a comprehensive security information and event management (SIEM) solution built with .NET 9 and WPF. It provides real-time monitoring, rule-based alerting, and advanced analytics for Windows security events and custom log files.
 
-## ?? Features
 
-- **Real-time Event Monitoring** - Stream and process security events as they occur
-- **Rule-Based Detection** - YAML-defined detection rules with flexible criteria
-- **Advanced Alerting** - Multi-severity alerts with customizable actions
-- **Full-Text Search** - SQLite FTS5 powered search across event details
-- **Material Design UI** - Modern, responsive WPF interface
-- **Data Visualization** - Charts and graphs for event trends
-- **Export Capabilities** - Export alerts to JSON/CSV formats
-- **Webhook Integration** - Send alerts to external systems
-- **Dual Database Support** - SQLite for development, SQL Server for production
 
-## ?? Prerequisites
+---
 
-- **.NET 9 SDK** or later ([Download](https://dotnet.microsoft.com/download/dotnet/9.0))
-- **Windows 10/11** or Windows Server 2019+
-- **Visual Studio 2022** (17.8+) or Rider 2024.1+ (optional, for development)
-- **SQL Server 2019+** (optional, for production deployments)
+## ğŸ“œ Table of Contents
 
-## ??? Architecture
+- [âœ¨ Key Features](#-key-features)
+- [ğŸ“‹ Prerequisites](#-prerequisites)
+- [ğŸ—ï¸ Architecture](#ï¸-architecture)
+- [ğŸš€ Quick Start Guide](#-quick-start-guide)
+- [ğŸ“– Usage Guide](#-usage-guide)
+- [ğŸ› ï¸ For Developers & Contributors](#ï¸-for-developers--contributors)
+- [ğŸ“¦ Deployment](#-deployment)
+- [ğŸ“ Sample Rules Included](#-sample-rules-included)
+- [ğŸ¤” Troubleshooting](#-troubleshooting)
+- [ğŸ“œ License](#-license)
 
-LogSentinel follows a clean 3-tier architecture:
+---
+
+## âœ¨ Key Features
+
+- **Real-time Event Monitoring**: Stream and process security events as they occur.
+- **Rule-Based Detection**: Flexible detection rules defined in simple **YAML** files.
+- **Full-Text Search**: Powered by **SQLite FTS5** for fast and powerful queries across all event data.
+- **Modern UI**: An intuitive and responsive interface built with WPF and Material Design.
+- **Data Visualization**: Charts and graphs using LiveCharts2 to visualize event trends.
+- **Webhook Integration**: Send alerts to external systems like Slack, Discord, or custom APIs.
+- **Dual Database Support**: Use **SQLite** for development and standalone deployments, or **SQL Server** for production environments.
+
+---
+
+## ğŸ“‹ Prerequisites
+
+- **.NET 9 SDK** or later.
+- **Windows 10/11** or **Windows Server 2019+**.
+- **Visual Studio 2022** (17.8+) or **Rider 2024.1+** (Optional, for development).
+- **SQL Server 2019+** (Optional, for production deployments).
+
+---
+
+## ğŸ—ï¸ Architecture
+
+LogSentinel follows a clean 3-tier architecture for maintainability and scalability.
 
 ```
-„¡„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„¢
-„   UI Layer (WPF - LogSentinel.UI)                        „ 
-„   „¥„Ÿ Material Design XAML Toolkit                        „ 
-„   „¥„Ÿ MVVM Pattern (CommunityToolkit.Mvvm)                „ 
-„   „¤„Ÿ LiveCharts2 for visualizations                      „ 
-„¥„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„§
-„   Business Logic Layer (LogSentinel.BUS)                 „ 
-„   „¥„Ÿ Event Normalizer (log parsing)                      „ 
-„   „¥„Ÿ Rule Engine (YAML-based detection)                  „ 
-„   „¥„Ÿ Alert Service (notification & export)               „ 
-„   „¤„Ÿ Event Importer (streaming & batch)                  „ 
-„¥„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„§
-„   Data Access Layer (LogSentinel.DAL)                    „ 
-„   „¥„Ÿ Entity Framework Core 9.0                           „ 
-„   „¥„Ÿ Repository Pattern                                  „ 
-„   „¥„Ÿ SQLite / SQL Server providers                       „ 
-„   „¤„Ÿ FTS5 full-text search                               „ 
-„¤„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„£
++-------------------------------------------------+
+|  UI Layer (WPF - LogSentinel.UI)                |
+|  - Material Design XAML Toolkit                 |
+|  - MVVM Pattern (CommunityToolkit.Mvvm)         |
+|  - LiveCharts2 for visualizations               |
++-------------------------------------------------+
+                         |
+                         V
++-------------------------------------------------+
+|  Business Logic Layer (LogSentinel.BUS)         |
+|  - Event Normalizer (Log Parsing)               |
+|  - Rule Engine (YAML-based Detection)           |
+|  - Alert Service (Notification & Export)        |
++-------------------------------------------------+
+                         |
+                         V
++-------------------------------------------------+
+|  Data Access Layer (LogSentinel.DAL)            |
+|  - Entity Framework Core 9.0                    |
+|  - Repository Pattern                           |
+|  - SQLite / SQL Server Providers                |
+|  - FTS5 Full-Text Search                        |
++-------------------------------------------------+
 ```
 
-## ?? Quick Start
+---
 
-### 1. Clone and Build
+## ğŸš€ Quick Start Guide
 
+Get LogSentinel up and running in 5 minutes.
+
+**1. Clone the Repository**
 ```bash
-git clone https://github.com/Nguyen-Thuan-Chi/LogSentinel.git
-cd "Log Sentinel"
+git clone [https://github.com/Nguyen-Thuan-Chi/LogSentinel.git](https://github.com/Nguyen-Thuan-Chi/LogSentinel.git)
+cd LogSentinel
+```
+
+**2. Restore & Build**
+```bash
 dotnet restore
 dotnet build
 ```
 
-### 2. Configure Database
+**3. Configure the Database**
 
-**Option A: SQLite (Default)**
-```json
-// appsettings.json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=./data/logsentinel.db"
-  }
-}
-```
+The project uses SQLite by default. No configuration is needed. To use SQL Server, update the connection string in `appsettings.json`.
 
-**Option B: SQL Server**
-```json
-// appsettings.json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=LAPTOP-PN16MELH;Database=LogSentinel;Integrated Security=True;TrustServerCertificate=True;"
-  }
-}
-```
+**4. Run Migrations**
 
-### 3. Run Migrations
-
-The application automatically applies migrations on startup. Alternatively:
-
+The application automatically applies migrations on startup. Alternatively, you can run them manually:
 ```bash
-cd LogSentinel.DAL
-dotnet ef database update
+dotnet ef database update --project LogSentinel.DAL
 ```
 
-### 4. Generate Sample Data
-
-```powershell
-# Generate 5000 synthetic events
-.\scripts\Generate-SyntheticLogs.ps1 -EventCount 5000
-
-# Continuous mode (append events every 5 seconds)
-.\scripts\Generate-SyntheticLogs.ps1 -Continuous
-```
-
-### 5. Run the Application
-
+**5. Run the Application**
 ```bash
-cd "Log Sentinel"
-dotnet run
+dotnet run --project "Log Sentinel"
 ```
-
-Or press **F5** in Visual Studio.
-
-## ?? Usage Guide
-
-### Dashboard
-
-The dashboard provides an at-a-glance view of system health:
-- **Total Events Today** - Count of processed events
-- **Recent Alerts** - Alerts from the last 5 minutes
-- **Event Trends** - Hourly event distribution chart
-- **Severity Breakdown** - Count by severity level
-
-### Events View
-
-Browse and search all ingested events:
-- **Full-Text Search** - Search across all event fields
-- **Filters** - Filter by host, user, event ID, level, date range
-- **Pagination** - Handle large datasets efficiently
-- **Context Menu** - Right-click for actions (create alert, pivot to graph, etc.)
-
-### Rules View
-
-Manage detection rules:
-- **Enable/Disable** - Toggle rules on/off
-- **Edit YAML** - Modify rule definitions
-- **Test Rule** - Dry-run against selected events
-- **View Stats** - Trigger count and last triggered time
-
-### Creating Custom Rules
-
-Rules are defined in YAML format:
-
-```yaml
-name: Failed Login Threshold
-description: Detects multiple failed login attempts from the same user
-severity: High
-enabled: true
-selection:
-  event_id: 4625
-condition:
-  count: 5
-  timeframe: 300  # seconds
-  group_by: user
-action:
-  alert: true
-  title: "Multiple Failed Logins for {user}"
-  description: "{count} failed login attempts detected"
-```
-
-**Rule Components:**
-- `selection` - Initial event filtering (event_id, level, provider, process, user, host)
-- `condition` - Detection logic (count, timeframe, group_by, pattern, field)
-- `action` - Response behavior (alert, title, description)
-
-Place YAML files in: `LogSentinel.DAL\Data\Rules\`
-
-## ?? Running Tests
-
-```bash
-# Run all tests
-dotnet test
-
-# Run with coverage
-dotnet test --collect:"XPlat Code Coverage"
-
-# Run specific test class
-dotnet test --filter "FullyQualifiedName~RuleEngineTests"
-```
-
-**Test Coverage:**
-- ? EventNormalizer (log parsing validation)
-- ? RuleEngine (3 sample rules: failed login, admin creation, suspicious PowerShell)
-- ? AlertService (CRUD, export, webhook)
-
-## ?? Integrations
-
-### Webhook Configuration
-
-Send alerts to external systems:
-
-```json
-// appsettings.json
-{
-  "LogSentinel": {
-    "AlertWebhookUrl": "https://your-server.com/api/alerts"
-  }
-}
-```
-
-Alert payload:
-```json
-{
-  "alert_id": 123,
-  "rule_name": "Failed Login Threshold",
-  "severity": "High",
-  "timestamp": "2024-01-15T14:30:00Z",
-  "title": "Multiple Failed Logins",
-  "description": "5 failed login attempts detected"
-}
-```
-
-### Windows Event Log Import
-
-LogSentinel can import directly from Windows Event Logs:
-
-```csharp
-var eventNormalizer = serviceProvider.GetRequiredService<IEventNormalizer>();
-var eventLog = new EventLog("Security");
-foreach (EventLogEntry entry in eventLog.Entries) {
-    var dto = eventNormalizer.NormalizeFromWindowsEvent(entry);
-    // Process...
-}
-```
-
-## ?? Configuration Reference
-
-**appsettings.json**
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Data Source=./data/logsentinel.db"
-  },
-  "LogSentinel": {
-    "SampleLogsPath": "./sample-logs/incoming",
-    "RulesPath": "./Data/Rules",
-    "EnableFileWatcher": true,
-    "AlertWebhookUrl": "",
-    "BatchSize": 1000,
-    "ChannelCapacity": 10000
-  },
-  "Serilog": {
-    "MinimumLevel": {
-      "Default": "Information"
-    },
-    "WriteTo": [
-      { "Name": "Console" },
-      { "Name": "File", "Args": { "path": "logs/logsentinel-.log" } }
-    ]
-  }
-}
-```
-
-## ?? Performance
-
-- **Event Processing** - Up to 10,000 events/second (in-memory channel)
-- **Database** - Tested with 1M+ events in SQLite, 100M+ in SQL Server
-- **FTS5 Search** - Sub-second full-text queries on 1M events
-- **Rule Evaluation** - < 1ms per rule per event (compiled predicates)
-
-**Batch Import Benchmark:**
-```bash
-# Import 10,000 events
-Measure-Command { .\scripts\Import-Batch.ps1 -File "large-events.log" }
-# Typical: 2-5 seconds
-```
-
-## ??? Development
-
-### Project Structure
-
-```
-Log Sentinel/
-„¥„Ÿ„Ÿ Log Sentinel/           # UI project (WPF)
-„    „¥„Ÿ„Ÿ UI/                 # Views and controls
-„    „¥„Ÿ„Ÿ ViewModels/         # MVVM view models
-„    „¤„Ÿ„Ÿ appsettings.json
-„¥„Ÿ„Ÿ LogSentinel.BUS/        # Business logic
-„    „¥„Ÿ„Ÿ Interfaces/
-„    „¥„Ÿ„Ÿ Models/
-„    „¤„Ÿ„Ÿ Services/
-„¥„Ÿ„Ÿ LogSentinel.DAL/        # Data access
-„    „¥„Ÿ„Ÿ Data/               # Entities and DbContext
-„    „¥„Ÿ„Ÿ Repositories/
-„    „¤„Ÿ„Ÿ Migrations/
-„¥„Ÿ„Ÿ LogSentinel.Tests/      # Unit tests
-„¥„Ÿ„Ÿ sample-logs/            # Sample data
-„¥„Ÿ„Ÿ scripts/                # Utility scripts
-„¤„Ÿ„Ÿ README.md
-```
-
-### Adding a New Repository
-
-1. Define interface in `LogSentinel.DAL\Repositories\`
-2. Implement `EFRepository<TEntity>`
-3. Register in `App.xaml.cs` DI container
-4. Use via constructor injection
-
-### Adding a New Rule
-
-1. Create YAML file in `LogSentinel.DAL\Data\Rules\`
-2. Define selection, condition, and action
-3. Restart app or call `IRuleEngine.ReloadRulesAsync()`
-
-## ?? Deployment
-
-### SQLite Deployment (Standalone)
-
-1. Publish the app:
-   ```bash
-   dotnet publish -c Release -r win-x64 --self-contained
-   ```
-2. Copy output from `bin\Release\net9.0-windows\win-x64\publish\`
-3. Ensure `data/` folder is writable
-
-### SQL Server Deployment (Enterprise)
-
-1. Create database:
-   ```sql
-   CREATE DATABASE LogSentinel;
-   ```
-2. Update connection string in `appsettings.Production.json`
-3. Run migrations:
-   ```bash
-   dotnet ef database update --project LogSentinel.DAL
-   ```
-4. Deploy application
-
-## ?? Sample Rules Included
-
-| Rule Name | Event ID | Description |
-|-----------|----------|-------------|
-| Failed Login Threshold | 4625 | 5+ failed logins in 5 minutes |
-| Admin User Created | 4732 | User added to Administrators group |
-| Suspicious PowerShell | - | PowerShell with `-Enc`, `-NoP`, `-W Hidden` |
-| Privilege Escalation | 4672 | Special privileges assigned |
-| RDP Brute Force | 4625 | Multiple RDP login failures |
-| Service Installation | 7045 | New service installed |
-| Mimikatz Detection | - | Credential dumping tool signatures |
-| Event Log Cleared | 1102 | Security log cleared |
-| Scheduled Task Created | 4698 | Potentially malicious task |
-| Account Lockout | 4740 | User account locked out |
-
-## ?? Troubleshooting
-
-**Issue: Database locked**
-- Solution: Ensure only one instance of the app is running (SQLite limitation)
-
-**Issue: Events not appearing**
-- Check `sample-logs/incoming` folder exists and is writable
-- Verify `EnableFileWatcher: true` in config
-- Check logs in `logs/logsentinel-{date}.log`
-
-**Issue: High memory usage**
-- Reduce `ChannelCapacity` in config
-- Decrease `BatchSize`
-- Enable pagination in Events View
-
-**Issue: Rules not triggering**
-- Verify rule is enabled in Rules View
-- Check rule YAML syntax with YAML validator
-- Test rule against known matching event
-
-## ?? License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
-
-## ?? Contributing
-
-Contributions are welcome! Please:
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## ?? Support
-
-- **Issues**: [GitHub Issues](https://github.com/Nguyen-Thuan-Chi/LogSentinel/issues)
-- **Email**: your-email@example.com
-- **Documentation**: [Wiki](https://github.com/Nguyen-Thuan-Chi/LogSentinel/wiki)
-
-## ?? Acknowledgments
-
-- Material Design In XAML Toolkit
-- LiveCharts2
-- YamlDotNet
-- Entity Framework Core
-- Serilog
-- xUnit
+Or simply press **F5** in Visual Studio.
 
 ---
 
-**Built with ?? using .NET 9 and WPF**
+## ğŸ“– Usage Guide
+
+- **Dashboard**: Get an at-a-glance view of system health, recent alerts, and event trends.
+- **Events View**: Browse, search, and filter all ingested events. Right-click on an event for context actions.
+- **Rules View**: Manage all detection rules. Enable/disable, edit YAML definitions, and test rules against events.
+
+---
+
+## ğŸ› ï¸ For Developers & Contributors
+
+We welcome contributions! Here's how to get started.
+
+### Project Structure
+
+The solution is organized into three main projects: `LogSentinel.UI`, `LogSentinel.BUS` (Business Logic), and `LogSentinel.DAL` (Data Access).
+
+### Creating a Custom Rule
+
+1.  Create a new `.yml` file in `LogSentinel.DAL/Data/Rules/`.
+2.  Define the `selection`, `condition`, and `action` for your rule.
+    ```yaml
+    name: New Admin User Created
+    description: Detects when a new user is added to a privileged group.
+    severity: Medium
+    enabled: true
+    selection:
+      event_id: 4732
+    condition:
+      # No specific condition needed, the event itself is the trigger
+      count: 1
+      timeframe: 60
+    action:
+      alert: true
+      title: "Admin User '{user}' Created"
+      description: "A new user '{user}' was added to the Administrators group."
+    ```
+3.  The application will automatically load the new rule on startup.
+
+### Contribution Workflow
+
+1.  **Fork** the repository.
+2.  Create a new feature branch (`git checkout -b feature/YourAmazingFeature`).
+3.  Commit your changes (`git commit -m 'feat: Add some AmazingFeature'`).
+4.  Push to the branch (`git push origin feature/YourAmazingFeature`).
+5.  Open a **Pull Request**.
+
+---
+
+## ğŸ“¦ Deployment
+
+### Standalone (SQLite)
+
+1.  Publish the application as a self-contained executable:
+    ```bash
+    dotnet publish -c Release -r win-x64 --self-contained
+    ```
+2.  Copy the output from `bin\Release\net9.0-windows\win-x64\publish\`.
+3.  Ensure the application has write permissions to the `data/` folder.
+
+### Enterprise (SQL Server)
+
+1.  Create a new database in your SQL Server instance.
+2.  Update the `DefaultConnection` in `appsettings.Production.json` with your SQL Server connection string.
+3.  Deploy the published application files to your server.
+
+---
+
+## ğŸ“ Sample Rules Included
+
+| Rule Name                 | Event ID | Description                                            |
+| ------------------------- | -------- | ------------------------------------------------------ |
+| **Failed Login Threshold** | 4625     | 5+ failed logins from the same user in 5 minutes.      |
+| **Admin User Created** | 4732     | A user was added to the local Administrators group.    |
+| **Suspicious PowerShell** | -        | Detects PowerShell commands with obfuscation flags.    |
+| **Privilege Escalation** | 4672     | Special privileges assigned to a new logon.            |
+| **Event Log Cleared** | 1102     | The Security event log was cleared.                    |
+| **New Service Installed** | 7045     | A new service was installed on the system.             |
+| **Account Lockout** | 4740     | A user account was locked out.                         |
+
+---
+
+## ğŸ¤” Troubleshooting
+
+-   **Issue: Database is locked.**
+    -   **Solution**: This is a limitation of SQLite. Ensure only one instance of the application is running.
+-   **Issue: Events are not appearing.**
+    -   **Solution**: Check that the log file directory exists and that the application has the necessary read/write permissions. Review the application logs in the `logs/` directory for errors.
+-   **Issue: A rule is not triggering.**
+    -   **Solution**: In the Rules View, ensure the rule is enabled. Use a YAML validator to check your rule's syntax. Use the "Test Rule" feature against a known matching event.
+
+---
+
+## ğŸ“œ License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
