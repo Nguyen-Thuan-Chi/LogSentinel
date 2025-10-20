@@ -27,7 +27,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                                Margin="10,0,0,3"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="? Acknowledge All" 
+                    <Button Content="Acknowledge All" 
                             Command="{Binding AcknowledgeAllCommand}"
                             Background="#10B981" 
                             Foreground="White" 
@@ -35,7 +35,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                             Padding="12,8"
                             Margin="0,0,10,0"
                             Cursor="Hand"/>
-                    <Button Content="?? Export CSV" 
+                    <Button Content="Export CSV" 
                             Command="{Binding ExportCsvCommand}"
                             Background="#3B82F6" 
                             Foreground="White" 
@@ -43,7 +43,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                             Padding="12,8"
                             Margin="0,0,10,0"
                             Cursor="Hand"/>
-                    <Button Content="?? Refresh" 
+                    <Button Content="Refresh" 
                             Command="{Binding RefreshCommand}"
                             Background="#6B7280" 
                             Foreground="White" 
@@ -180,7 +180,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                                            ToolTip="Acknowledge">
                                         <Button.Style>
                                             <Style TargetType="Button">
-                                                <Setter Property="Content" Value="?"/>
+                                                <Setter Property="Content" Value="ACK"/>
                                                 <Setter Property="IsEnabled" Value="True"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsAcknowledged}" Value="True">
@@ -193,7 +193,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                                     </Button>
 
                                     <!-- View Details Button -->
-                                    <Button Content="??" 
+                                    <Button Content="VIEW" 
                                            Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                            CommandParameter="{Binding}"
                                            Background="#3B82F6" 
@@ -205,7 +205,7 @@ xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
                                            ToolTip="View Details"/>
 
                                     <!-- Delete Button -->
-                                    <Button Content="??" 
+                                    <Button Content="DEL" 
                                            Command="{Binding DataContext.DeleteAlertCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                            CommandParameter="{Binding}"
                                            Background="#EF4444" 
