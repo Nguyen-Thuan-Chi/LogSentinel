@@ -4,7 +4,9 @@
 [![.NET Version](https://img.shields.io/badge/.NET-9.0-blueviolet)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**LogSentinel** is a comprehensive security information and event management (SIEM) solution built with .NET 9 and WPF. It provides real-time monitoring, rule-based alerting, and advanced analytics for Windows security events and custom log files.
+LogSentinel is a comprehensive security information and event management (SIEM) solution built with .NET 9 and WPF.
+<br>
+*LogSentinel là một giải pháp quản lý thông tin và sự kiện bảo mật (SIEM) toàn diện, được xây dựng bằng .NET 9 và WPF.*
 
 
 
@@ -27,13 +29,33 @@
 
 ## ✨ Key Features
 
-- **Real-time Event Monitoring**: Stream and process security events as they occur.
-- **Rule-Based Detection**: Flexible detection rules defined in simple **YAML** files.
-- **Full-Text Search**: Powered by **SQLite FTS5** for fast and powerful queries across all event data.
-- **Modern UI**: An intuitive and responsive interface built with WPF and Material Design.
-- **Data Visualization**: Charts and graphs using LiveCharts2 to visualize event trends.
-- **Webhook Integration**: Send alerts to external systems like Slack, Discord, or custom APIs.
-- **Dual Database Support**: Use **SQLite** for development and standalone deployments, or **SQL Server** for production environments.
+- **Real-time Event Monitoring**
+  <br>
+  *Giám sát sự kiện thời gian thực*
+
+- **Rule-Based Detection**
+  <br>
+  *Phát hiện dựa trên quy tắc YAML linh hoạt*
+
+- **Full-Text Search**
+  <br>
+  *Tìm kiếm toàn văn mạnh mẽ với SQLite FTS5*
+
+- **Modern UI**
+  <br>
+  *Giao diện người dùng hiện đại với WPF và Material Design*
+
+- **Data Visualization**
+  <br>
+  *Trực quan hóa dữ liệu bằng biểu đồ và đồ thị*
+
+- **Webhook Integration**
+  <br>
+  *Tích hợp Webhook để gửi cảnh báo đến hệ thống bên ngoài*
+
+- **Dual Database Support**
+  <br>
+  *Hỗ trợ hai loại Database: SQLite và SQL Server*
 
 ---
 
@@ -49,6 +71,8 @@
 ## 🏗️ Architecture
 
 LogSentinel follows a clean 3-tier architecture for maintainability and scalability.
+<br>
+*LogSentinel tuân theo kiến trúc 3 tầng rõ ràng để dễ bảo trì và mở rộng.*
 
 ```
 +-------------------------------------------------+
@@ -100,7 +124,9 @@ The project uses SQLite by default. No configuration is needed. To use SQL Serve
 
 **4. Run Migrations**
 
-The application automatically applies migrations on startup. Alternatively, you can run them manually:
+The application automatically applies migrations on startup. For manual execution:
+<br>
+*Ứng dụng sẽ tự động áp dụng migration khi khởi động. Để chạy thủ công:*
 ```bash
 dotnet ef database update --project LogSentinel.DAL
 ```
@@ -110,14 +136,22 @@ dotnet ef database update --project LogSentinel.DAL
 dotnet run --project "Log Sentinel"
 ```
 Or simply press **F5** in Visual Studio.
+<br>
+*Hoặc chỉ cần nhấn F5 trong Visual Studio.*
 
 ---
 
 ## 📖 Usage Guide
 
 - **Dashboard**: Get an at-a-glance view of system health, recent alerts, and event trends.
-- **Events View**: Browse, search, and filter all ingested events. Right-click on an event for context actions.
-- **Rules View**: Manage all detection rules. Enable/disable, edit YAML definitions, and test rules against events.
+  <br>
+  *Cung cấp cái nhìn tổng quan về hệ thống, các cảnh báo gần đây và xu hướng sự kiện.*
+- **Events View**: Browse, search, and filter all ingested events. Right-click for context actions.
+  <br>
+  *Duyệt, tìm kiếm và lọc tất cả sự kiện. Nhấp chuột phải vào một sự kiện để xem các hành động ngữ cảnh.*
+- **Rules View**: Manage all detection rules (enable/disable, edit YAML, and test).
+  <br>
+  *Quản lý tất cả quy tắc phát hiện (bật/tắt, chỉnh sửa YAML và kiểm tra).*
 
 ---
 
@@ -183,28 +217,36 @@ The solution is organized into three main projects: `LogSentinel.UI`, `LogSentin
 ## 📝 Sample Rules Included
 
 | Rule Name                 | Event ID | Description                                            |
-| ------------------------- | -------- | ------------------------------------------------------ |
-| **Failed Login Threshold** | 4625     | 5+ failed logins from the same user in 5 minutes.      |
-| **Admin User Created** | 4732     | A user was added to the local Administrators group.    |
+| ------------------------  | -------- | ------------------------------------------------------ |
+| **Failed Login Threshold**| 4625     | 5+ failed logins from the same user in 5 minutes.      |
+| **Admin User Created**    | 4732     | A user was added to the local Administrators group.    |
 | **Suspicious PowerShell** | -        | Detects PowerShell commands with obfuscation flags.    |
-| **Privilege Escalation** | 4672     | Special privileges assigned to a new logon.            |
-| **Event Log Cleared** | 1102     | The Security event log was cleared.                    |
+| **Privilege Escalation**  | 4672     | Special privileges assigned to a new logon.            |
+| **Event Log Cleared**     | 1102     | The Security event log was cleared.                    |
 | **New Service Installed** | 7045     | A new service was installed on the system.             |
-| **Account Lockout** | 4740     | A user account was locked out.                         |
+| **Account Lockout**       | 4740     | A user account was locked out.                         |
 
 ---
 
 ## 🤔 Troubleshooting
 
 -   **Issue: Database is locked.**
+    -   *Vấn đề: Database bị khóa.*
     -   **Solution**: This is a limitation of SQLite. Ensure only one instance of the application is running.
+    -   *Giải pháp: Đây là giới hạn của SQLite. Hãy đảm bảo chỉ có một phiên bản của ứng dụng đang chạy.*
 -   **Issue: Events are not appearing.**
-    -   **Solution**: Check that the log file directory exists and that the application has the necessary read/write permissions. Review the application logs in the `logs/` directory for errors.
+    -   *Vấn đề: Sự kiện không xuất hiện.*
+    -   **Solution**: Check that the log file directory exists and the application has permissions. Review application logs in the `logs/` directory for errors.
+    -   *Giải pháp: Kiểm tra thư mục chứa log có tồn tại và ứng dụng có quyền truy cập không. Xem file log của ứng dụng trong thư mục `logs/` để tìm lỗi.*
 -   **Issue: A rule is not triggering.**
-    -   **Solution**: In the Rules View, ensure the rule is enabled. Use a YAML validator to check your rule's syntax. Use the "Test Rule" feature against a known matching event.
+    -   *Vấn đề: Một quy tắc không được kích hoạt.*
+    -   **Solution**: In the Rules View, ensure the rule is enabled. Use a YAML validator to check your rule's syntax.
+    -   *Giải pháp: Trong màn hình Rules, hãy chắc chắn rằng quy tắc đã được bật. Sử dụng một công cụ kiểm tra cú pháp YAML để đảm bảo file rule của bạn chính xác.*
 
 ---
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
+<br>
+*Dự án này được cấp phép dưới Giấy phép MIT.*
