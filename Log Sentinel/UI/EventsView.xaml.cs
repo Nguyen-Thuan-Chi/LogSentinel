@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using Log_Sentinel.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
@@ -8,7 +8,7 @@ namespace Log_Sentinel.UI
     /// <summary>
     /// Interaction logic for EventsView.xaml
     /// </summary>
-    public partial class EventsView : UserControl
+    public partial class EventsView : System.Windows.Controls.UserControl
     {
         public EventsView()
         {

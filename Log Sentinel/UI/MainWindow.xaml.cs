@@ -1,6 +1,9 @@
-﻿using System.Windows;
+using System.Windows;
+using System.ComponentModel;
+using System.IO;
 using Log_Sentinel.ViewModels;
 using LogSentinel.BUS.Interfaces;
+using Hardcodet.Wpf.TaskbarNotification;
 
 namespace Log_Sentinel
 {
@@ -12,6 +15,8 @@ namespace Log_Sentinel
         private readonly MainViewModel _mainViewModel;
         private readonly SettingsViewModel _settingsViewModel;
         private readonly IAlertService _alertService;
+        private TaskbarIcon? _taskbarIcon;
+        private bool _isExiting = false;
 
         // Expose Settings as a bindable property for XAML
         public SettingsViewModel GlobalSettings
@@ -30,6 +35,9 @@ namespace Log_Sentinel
             
             DataContext = _mainViewModel;
 
+            // Initialize System Tray
+            InitializeSystemTray();
+
             // Initialize the ComboBox to the current DisplayMode
             if (DisplayModeComboBox != null)
             {
@@ -42,7 +50,7 @@ namespace Log_Sentinel
                 // alert is AlertDto type from the event
                 Dispatcher.Invoke(() =>
                 {
-                    var result = MessageBox.Show($"[{alert.Severity}] {alert.Title}\n\n{alert.Description}",
+                    var result = System.Windows.MessageBox.Show($"[{alert.Severity}] {alert.Title}\n\n{alert.Description}",
                         "New Alert",
                         MessageBoxButton.OKCancel,
                         MessageBoxImage.Warning);
@@ -118,6 +126,114 @@ namespace Log_Sentinel
                     break;
             }
         }
+
+        #region System Tray Implementation
+
+        private void InitializeSystemTray()
+        {
+            _taskbarIcon = new TaskbarIcon();
+            
+            // Set the icon
+            _taskbarIcon.IconSource = new System.Windows.Media.Imaging.BitmapImage(new Uri("pack://application:,,,/Assets/app_icon.ico"));
+            _taskbarIcon.ToolTipText = "Log Sentinel";
+            
+            // Handle double-click to show window
+            _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowWindow();
+            
+            // Create context menu
+            CreateContextMenu();
+            
+            _taskbarIcon.Visibility = Visibility.Hidden; // Initially hidden
+        }
+
+        private void CreateContextMenu()
+        {
+            var contextMenu = new System.Windows.Controls.ContextMenu();
+
+            // Open Log Sentinel
+            var openMenuItem = new System.Windows.Controls.MenuItem();
+            openMenuItem.Header = "Open Log Sentinel";
+            openMenuItem.FontWeight = FontWeights.Bold;
+            openMenuItem.Click += (s, e) => ShowWindow();
+            contextMenu.Items.Add(openMenuItem);
+
+            // Separator
+            contextMenu.Items.Add(new System.Windows.Controls.Separator());
+
+            // Configuration (placeholder)
+            var configMenuItem = new System.Windows.Controls.MenuItem();
+            configMenuItem.Header = "Configuration";
+            configMenuItem.Click += (s, e) => 
+            {
+                // Placeholder - không thực hiện hành động gì
+                // Bạn có thể thêm logic sau này
+            };
+            contextMenu.Items.Add(configMenuItem);
+
+            // Separator
+            contextMenu.Items.Add(new System.Windows.Controls.Separator());
+
+            // Exit
+            var exitMenuItem = new System.Windows.Controls.MenuItem();
+            exitMenuItem.Header = "Exit";
+            exitMenuItem.Click += (s, e) => ExitApplication();
+            contextMenu.Items.Add(exitMenuItem);
+
+            if(_taskbarIcon != null)
+                _taskbarIcon.ContextMenu = contextMenu;
+        }
+
+        private void ShowWindow()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            if(_taskbarIcon != null)
+                _taskbarIcon.Visibility = Visibility.Hidden;
+        }
+
+        private void HideToSystemTray()
+        {
+            Hide();
+            if(_taskbarIcon != null)
+            {
+                _taskbarIcon.Visibility = Visibility.Visible;
+                
+                // Show balloon tip to inform user
+                _taskbarIcon.ShowBalloonTip("Log Sentinel", "Application has been minimized to system tray.", Hardcodet.Wpf.TaskbarNotification.BalloonIcon.Info);
+            }
+        }
+
+        private void ExitApplication()
+        {
+            _isExiting = true;
+            _taskbarIcon?.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            if (!_isExiting)
+            {
+                // Cancel the closing and hide to system tray instead
+                e.Cancel = true;
+                HideToSystemTray();
+            }
+            else
+            {
+                // Clean up
+                _taskbarIcon?.Dispose();
+                base.OnClosing(e);
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _taskbarIcon?.Dispose();
+            base.OnClosed(e);
+        }
+
+        #endregion
     }
 }
 

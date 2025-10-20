@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Configuration;
 using System.Data;
 using System.IO;
@@ -21,7 +21,7 @@ namespace Log_Sentinel
     /// <summary>
     /// Interaction logic for App.xaml
     /// </summary>
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private IHost? _host;
         private CancellationTokenSource? _cancellationTokenSource;
@@ -174,7 +174,7 @@ namespace Log_Sentinel
                         Log.Error(ex, "Error during database migration");
                         
                         // Ask user if they want to recreate database
-                        var result = MessageBox.Show(
+                        var result = System.Windows.MessageBox.Show(
                             $"Database migration failed:\n{ex.Message}\n\nDo you want to recreate the database? (All existing data will be lost)",
                             "Database Migration Error",
                             MessageBoxButton.YesNo,
@@ -192,7 +192,7 @@ namespace Log_Sentinel
                             catch (Exception recreateEx)
                             {
                                 Log.Fatal(recreateEx, "Failed to recreate database");
-                                MessageBox.Show(
+                                System.Windows.MessageBox.Show(
                                     $"Failed to recreate database:\n{recreateEx.Message}",
                                     "Error",
                                     MessageBoxButton.OK,
@@ -249,7 +249,7 @@ namespace Log_Sentinel
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Application startup failed");
-                MessageBox.Show($"Application startup failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"Application startup failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(1);
             }
         }

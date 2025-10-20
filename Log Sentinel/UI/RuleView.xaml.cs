@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +20,7 @@ namespace Log_Sentinel.UI
     /// <summary>
     /// Interaction logic for RuleView.xaml
     /// </summary>
-    public partial class RuleView : UserControl
+    public partial class RuleView : System.Windows.Controls.UserControl
     {
         public RuleView()
         {

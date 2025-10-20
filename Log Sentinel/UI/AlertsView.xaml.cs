@@ -5,7 +5,7 @@ using System.Windows;
 
 namespace Log_Sentinel.UI
 {
-    public partial class AlertsView : UserControl
+    public partial class AlertsView : System.Windows.Controls.UserControl
     {
         public AlertsView()
         {

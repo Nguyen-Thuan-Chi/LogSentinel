@@ -5,7 +5,7 @@ namespace Log_Sentinel.UI
     /// <summary>
     /// Interaction logic for HelpView.xaml
     /// </summary>
-    public partial class HelpView : UserControl
+    public partial class HelpView : System.Windows.Controls.UserControl
     {
         public HelpView()
         {

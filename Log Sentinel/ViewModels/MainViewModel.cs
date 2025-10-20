@@ -10,12 +10,12 @@ namespace Log_Sentinel.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private UserControl? _currentView;
+        private System.Windows.Controls.UserControl? _currentView;
         private int _totalToday;
         private int _warningCount;
         private int _errorCount;
 
-        public UserControl? CurrentView
+        public System.Windows.Controls.UserControl? CurrentView
         {
             get => _currentView;
             set

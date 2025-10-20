@@ -1,5 +1,7 @@
+using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
@@ -122,6 +124,12 @@ namespace Log_Sentinel.ViewModels
             BrowseDatabaseCommand = new RelayCommand(_ => BrowseDatabase());
             ClearDataCommand = new RelayCommand(_ => ClearData());
 
+            // Initialize with the actual database path used by the application
+            var appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LogSentinel");
+            _databasePath = Path.Combine(appDataDir, "logsentinel.db");
+
             // Load initial database size
             UpdateDatabaseSize();
         }
@@ -193,21 +201,74 @@ namespace Log_Sentinel.ViewModels
 
                     using var context = new AppDbContext(optionsBuilder.Options);
 
-                    // Delete all records from Events and Alerts tables
-                    await context.Database.ExecuteSqlRawAsync("DELETE FROM Events");
-                    await context.Database.ExecuteSqlRawAsync("DELETE FROM Alerts");
+                    // Ensure database exists first
+                    await context.Database.EnsureCreatedAsync();
 
-                    // Save changes
+                    // Check if database can be connected to and tables exist
+                    var canConnect = await context.Database.CanConnectAsync();
+                    if (!canConnect)
+                    {
+                        MessageBox.Show(
+                            "Cannot connect to database. Please check the database path.",
+                            "Database Connection Error",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // Count existing data
+                    int eventCount = 0;
+                    int alertCount = 0;
+
+                    try
+                    {
+                        eventCount = await context.Events.CountAsync();
+                        alertCount = await context.Alerts.CountAsync();
+                    }
+                    catch (Exception)
+                    {
+                        // Tables might not exist yet
+                        MessageBox.Show(
+                            "Database is empty or tables don't exist yet. Nothing to clear.",
+                            "No Data Found",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        return;
+                    }
+
+                    if (eventCount == 0 && alertCount == 0)
+                    {
+                        MessageBox.Show(
+                            "Database is empty. Nothing to clear.",
+                            "No Data Found",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                        return;
+                    }
+
+                    // Use bulk delete operations for better performance
+                    if (alertCount > 0)
+                    {
+                        await context.Database.ExecuteSqlRawAsync("DELETE FROM Alerts");
+                    }
+
+                    if (eventCount > 0)
+                    {
+                        await context.Database.ExecuteSqlRawAsync("DELETE FROM Events");
+                    }
+
+                    // Save changes and vacuum the database to reclaim space
                     await context.SaveChangesAsync();
-
-                    // Update database size
-                    UpdateDatabaseSize();
+                    await context.Database.ExecuteSqlRawAsync("VACUUM");
 
                     MessageBox.Show(
-                        "All event and alert data has been cleared successfully!",
+                        $"Successfully cleared {eventCount} events and {alertCount} alerts!",
                         "Data Cleared",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
+
+                    // Update database size
+                    UpdateDatabaseSize();
                 }
                 catch (Exception ex)
                 {
